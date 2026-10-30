@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bud</title>
-<meta name="description" content="Bud is a tiny AI agent that lives on the back of your phone. Flip your phone to wake it, tap to talk, and watch it get done. Reserve with a refundable deposit.">
+<meta name="description" content="Bud is a tiny AI agent that lives on the back of your phone. Flip your phone to wake it, say “Hey Bud”, and watch it get done. A working prototype today; join the waitlist.">
 <meta name="theme-color" content="#000000">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Bud. Flip. Talk. Done.">
@@ -45,7 +45,7 @@
       <a href="#how">How it works</a>
       <a href="#yours">Make it yours</a>
     </nav>
-    <a class="btn btn-light btn-sm" href="#reserve" data-track="nav_reserve">Reserve</a>
+    <a class="btn btn-light btn-sm" href="#reserve" data-track="nav_reserve">Join the waitlist</a>
   </div>
 </header>
 
@@ -71,12 +71,12 @@
       <p class="lede" data-v="agent">Bud is a tiny AI agent that lives on the back of your phone. Flip your phone to wake it, tap to talk, and watch it get done.</p>
       <p class="lede" data-v="companion">Bud is a little AI friend that lives on the back of your phone. It listens, thinks, gets excited, and gets things done for you.</p>
       <div class="cta-row">
-        <a class="btn btn-light btn-lg" href="#reserve" data-track="hero_reserve"><span data-v="agent">Reserve Bud</span><span data-v="companion">Reserve yours</span></a>
+        <a class="btn btn-light btn-lg" href="#reserve" data-track="hero_reserve"><span data-v="agent">Join the waitlist</span><span data-v="companion">Get yours first</span></a>
         <button class="btn btn-line btn-lg" type="button" data-film-open data-track="hero_film">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>Watch the film
         </button>
       </div>
-      <p class="fine">Refundable deposit. Ships <span data-cfg="shipWindow">TBD</span>.</p>
+      <p class="fine">A working prototype today. <a href="app/" data-track="hero_try">Try Bud in your browser</a>.</p>
     </div>
     <a class="scroll-cue" id="scrollCue" href="#onphone" aria-label="Scroll to see Bud on a phone"><span class="wheel" aria-hidden="true"></span>Scroll</a>
   </section>
@@ -90,7 +90,7 @@
         <p class="cap on" data-cap="0">Flip your phone.</p>
         <p class="cap" data-cap="1">Bud lives on the back.<small>It wakes up when you flip to it.</small></p>
         <p class="cap" data-cap="2">Below the camera.<br>Out of the way.</p>
-        <p class="cap" data-cap="3">Slim by design.<small>Final dimensions TBD.</small></p>
+        <p class="cap" data-cap="3">Slim by design.<small>Our own slim board is in the works.</small></p>
         <p class="cap" data-cap="4">One flip away,<br>wherever your phone goes.</p>
       </div>
       <div class="onphone-progress" aria-hidden="true"><i></i></div>
@@ -183,7 +183,7 @@
         <p class="r" style="--c: var(--needs)"><span class="led"></span>Needs you<span class="r-t">7:00 or 8:30?</span></p>
       </article>
     </div>
-    <p class="foot rv">Example requests. Which apps and services Bud works with at launch is TBD.</p>
+    <p class="foot rv">Example requests. Today Bud works with your iPhone’s calendar, reminders, contacts, messages, Maps, weather and Apple Music, and with agents like Claude and ChatGPT.</p>
   </section>
 
   <!-- ========================================================== privacy -->
@@ -205,10 +205,11 @@
         <h2 id="privacy-title">Mic on, light on.</h2>
         <p class="sub">Bud is designed with a small light wired to its microphone, like the camera light on a laptop. When the mic has power, the light is on, and no software can switch it off.</p>
         <ul class="principles">
-          <li><h3>Listens when you tap.</h3><p>Bud is designed to listen when you ask it to, not before.</p></li>
+          <li><h3>You choose how it listens.</h3><p>Say “Hey Bud” and it answers, or turn that off and it listens only when you tap. Double-tap Bud to turn its mic off.</p></li>
+          <li><h3>Your words stay yours.</h3><p>What Bud hears is written down on your phone when it can, and notes stay on your phone. When the phone can’t, Bud’s server writes it down and keeps nothing.</p></li>
           <li><h3>Asks before it acts.</h3><p>Sending, booking and buying wait for your OK.</p></li>
         </ul>
-        <p class="foot">The mic light is part of the planned hardware design. Full privacy details will be published before launch.</p>
+        <p class="foot">The mic light is part of the final hardware design. Questions about privacy? Write to hello@meetbud.app.</p>
       </div>
     </div>
   </section>
@@ -238,7 +239,7 @@
           <input id="nameInput" type="text" maxlength="16" value="Bud" autocomplete="off" spellcheck="false">
         </div>
         <button class="btn btn-dark btn-lg" id="cardBtn" type="button" data-track="card_open">Make my Bud card</button>
-        <p class="foot">Looks and colors are concepts. Which ones come with Bud at launch is TBD.</p>
+        <p class="foot">Looks, outfits and colors you pick in the Bud app show on Bud’s own screen.</p>
       </div>
     </div>
   </section>
@@ -274,25 +275,19 @@
     <header class="sec-head rv">
       <p class="eyebrow">Tech specs</p>
       <h2 id="specs-title">The details.</h2>
-      <p class="sub">We will publish final specs before anything ships. Until then, we won’t guess.</p>
+      <p class="sub">What our working prototype measures today, and what the final hardware adds. Final size and weight come with our own board.</p>
     </header>
     <dl class="spec-list rv">
-      <div><dt>Display</dt><dd>Round color screen. Type TBD.</dd></div>
-      <div><dt>Size</dt><dd>TBD</dd></div>
-      <div><dt>Thickness</dt><dd>TBD. Designed to be slim.</dd></div>
-      <div><dt>Weight</dt><dd>TBD</dd></div>
-      <div><dt>Battery life</dt><dd>TBD</dd></div>
-      <div><dt>Charging</dt><dd>USB-C (planned)</dd></div>
-      <div><dt>Connectivity</dt><dd>Bluetooth to your phone (planned)</dd></div>
-      <div><dt>Build</dt><dd>Aluminum and glass (planned)</dd></div>
-      <div><dt>Water</dt><dd>Splash resistant (planned)</dd></div>
-      <div><dt>Controls</dt><dd>Flip to wake, tap to talk (planned)</dd></div>
-      <div><dt>Mic light</dt><dd>Wired to the mic, on whenever it can hear (planned)</dd></div>
-      <div><dt>Works with</dt><dd>Planned for iPhone and Android. Final compatibility TBD.</dd></div>
-      <div><dt>Attaches</dt><dd>Magnetic, on the back of your phone, below the camera</dd></div>
-      <div><dt>Price</dt><dd data-cfg="price">TBD</dd></div>
-      <div><dt>Ships</dt><dd data-cfg="shipWindow">TBD</dd></div>
-      <div><dt>Deposit</dt><dd><span data-cfg="depositAmount">TBD</span>, fully refundable</dd></div>
+      <div><dt>Display</dt><dd>1.75-inch round AMOLED, 466 × 466 (prototype)</dd></div>
+      <div><dt>Battery life</dt><dd>About 8 hours with “Hey Bud” on (prototype)</dd></div>
+      <div><dt>Charging</dt><dd>USB-C</dd></div>
+      <div><dt>Connectivity</dt><dd>Bluetooth to your phone</dd></div>
+      <div><dt>Audio</dt><dd>Microphones to hear you, a speaker to answer</dd></div>
+      <div><dt>Build</dt><dd>Aluminum and glass</dd></div>
+      <div><dt>Controls</dt><dd>Flip to wake, tap to talk, double-tap to mute</dd></div>
+      <div><dt>Mic light</dt><dd>Wired to the mic, on whenever it can hear (final hardware)</dd></div>
+      <div><dt>Works with</dt><dd>iPhone app in beta. Android is planned.</dd></div>
+      <div><dt>Attaches</dt><dd>Magnetic, on the back of your phone, below the camera (final hardware)</dd></div>
     </dl>
   </section>
 
@@ -302,21 +297,14 @@
     <div class="reserve-card rv">
       <div class="reserve-bud"><div class="bud bud-md" id="reserveBud" role="img" aria-label="Bud saying hi"><span class="bud-glass"><span class="bud-screen"></span></span></div></div>
       <div class="reserve-body">
-        <p class="eyebrow">Reserve</p>
+        <p class="eyebrow">Waitlist</p>
         <h2 id="reserve-title">Be first in line.</h2>
-        <p class="sub">Hold your place with a fully refundable deposit.</p>
-        <dl class="terms">
-          <div><dt>Deposit</dt><dd data-cfg="depositAmount">TBD</dd></div>
-          <div><dt>Price</dt><dd data-cfg="price">TBD</dd></div>
-          <div><dt>Ships</dt><dd data-cfg="shipWindow">TBD</dd></div>
-        </dl>
-        <a class="btn btn-light btn-lg" id="reserveBtn" href="#reserve" data-track="reserve_click">Reserve with a refundable deposit</a>
-        <p class="fine" id="reserveNote">Reservations open soon. Join the list and we will email you first.</p>
+        <p class="sub">Bud is a working prototype today. Join the waitlist and you’ll hear first about early units, price and timing.</p>
         <form class="wait" id="waitForm" novalidate>
           <div class="wait-row">
             <label class="sr" for="waitEmail">Email</label>
             <input id="waitEmail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
-            <button class="btn btn-teal" type="submit">Notify me</button>
+            <button class="btn btn-teal" type="submit">Join</button>
           </div>
           <label class="sr" for="waitInterest">What are you most excited about?</label>
           <select id="waitInterest" name="interest">
@@ -327,7 +315,7 @@
           </select>
           <p class="wait-msg" id="waitMsg" role="status"></p>
         </form>
-        <p class="fine">We will only email you about Bud.</p>
+        <p class="fine">We’ll only email you about Bud. To come off the list, write to hello@meetbud.app.</p>
       </div>
     </div>
   </section>
@@ -345,15 +333,15 @@
       </details>
       <details>
         <summary>What can it do?</summary>
-        <p>The everyday stuff: scheduling, reminders, messages, reservations, lists and quick answers. Which apps and services it works with at launch is TBD.</p>
+        <p>The everyday stuff: your calendar, reminders and timers, messages and calls, directions, the weather, music, notes of your meetings and quick answers. Bud’s face shows its progress, and anything important waits for your tap.</p>
       </details>
       <details>
         <summary>Will it work with my phone?</summary>
-        <p>Bud is being designed for both iPhone and Android phones. Final compatibility is TBD.</p>
+        <p>Our iPhone app is in beta now. Android is planned.</p>
       </details>
       <details>
         <summary>How does it attach?</summary>
-        <p>With magnets. It snaps onto the back of your phone, below the camera, and comes off when you want. Details for phones without built-in magnets are TBD.</p>
+        <p>The final Bud snaps onto the back of your phone with magnets, below the camera, and comes off when you want. Today’s prototype is a development board in an aluminum case.</p>
       </details>
       <details>
         <summary>How do I see what Bud is doing?</summary>
@@ -361,23 +349,23 @@
       </details>
       <details>
         <summary>Is it always listening?</summary>
-        <p>No. Flipping your phone wakes Bud’s face, and it listens only when you tap it. Bud is designed with a light wired to its mic, so you can see whenever the mic is on.</p>
+        <p>Only if you want it to. With “Hey Bud” on, Bud listens through its own mic for its name. Turn it off and Bud listens only when you tap. Double-tap Bud to turn its mic off, and the final hardware adds a light wired to the mic, so you can see whenever it can hear.</p>
       </details>
       <details>
         <summary>Does it work with the AI I already use?</summary>
-        <p>That is the plan. Bud is built to be the face of your agent, whichever one you use. Which agents it connects to at launch is TBD.</p>
+        <p>Yes. With Bud Connect, agents like Claude and ChatGPT can show their work on Bud and wait for your tap before they act. Bud also has its own assistant built in.</p>
       </details>
       <details>
         <summary>How much is it, and when does it ship?</summary>
-        <p>Price: <span data-cfg="price">TBD</span>. Ships: <span data-cfg="shipWindow">TBD</span>. Reserve or join the list to hear first.</p>
+        <p>Bud is a working prototype today, and we’re making our own slim board for the first units. The waitlist hears first about price and timing.</p>
       </details>
       <details>
-        <summary>Is the deposit refundable?</summary>
-        <p>Yes. The deposit is fully refundable. You will see the full terms at checkout.</p>
+        <summary>Can I try it now?</summary>
+        <p>Yes, in your browser at <a href="app/">meetbud.app/app</a>: Bud’s face and a demo of its assistant. The full Bud app is in beta on iPhone.</p>
       </details>
       <details>
         <summary>Can I change how Bud looks?</summary>
-        <p>Looks change Bud’s colors and outfit, like a party hat or a pair of shades. Which looks come with Bud is TBD.</p>
+        <p>Yes. Looks change Bud’s colors and outfit, like a party hat or a pair of shades. Pick them in the app, and Bud wears them on its own screen. Visit places to find new pieces.</p>
       </details>
     </div>
   </section>
@@ -392,7 +380,8 @@
       <a href="#privacy">Privacy</a>
       <a href="#specs">Tech specs</a>
       <a href="#faq">FAQ</a>
-      <a href="#reserve">Reserve</a>
+      <a href="#reserve">Waitlist</a>
+      <a href="app/">Try Bud</a>
     </nav>
     <p class="legal">© 2026. Bud is in development. Names, features, looks and specs may change. Product images are renders.<span class="contact" id="contactLine" hidden></span></p>
   </div>

@@ -1,21 +1,23 @@
 /* Landing page settings. Edit these, not the page code.
  *
- * Anything unknown stays empty or 'TBD' and the page says so. Nothing here is sent
+ * Anything unknown stays empty, and the page leaves it out. Nothing here is sent
  * anywhere unless you fill in an endpoint or a payment link.
  */
 window.BUD_CONFIG = {
   name: 'Bud',
 
-  // Reserve: a Stripe Payment Link (https://buy.stripe.com/...). Empty shows
-  // "Reservations open soon" and puts the email list first.
+  // Reserve: a Stripe Payment Link (https://buy.stripe.com/...), for a deposit button (the page has
+  // none since 2026-10-30: a working prototype, and the waitlist first). Unset values hide what shows
+  // them, so the page never says "TBD".
   stripePaymentLink: '',
-  depositAmount: 'TBD', // shown as written, for example '$49'
-  price: 'TBD',
-  shipWindow: 'TBD',
+  depositAmount: '', // shown as written, for example '$49'
+  price: '',
+  shipWindow: '',
 
-  // Email list: an endpoint that accepts a JSON POST { email, interest, variant, utm }.
-  // Empty keeps the form in preview mode: it thanks people and sends nothing.
-  waitlistEndpoint: '',
+  // Email list: an endpoint that accepts a JSON POST { email, interest, variant, utm }: Bud's
+  // server keeps the list (connect/waitlist.mjs). Empty keeps the form in preview mode: it thanks
+  // people and sends nothing.
+  waitlistEndpoint: 'https://bud-connect.meetbud.workers.dev/waitlist',
 
   // The film (rendered by tools/film.mjs). Empty filmSrc plays the in-page animatic instead.
   filmSrc: 'film/bud-film.mp4',

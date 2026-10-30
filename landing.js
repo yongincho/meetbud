@@ -11,7 +11,7 @@
   const K = window.Bud;
   const U = K.util;
   const CFG = Object.assign(
-    { name: 'Bud', depositAmount: 'TBD', price: 'TBD', shipWindow: 'TBD', variants: ['agent', 'companion'], analytics: true },
+    { name: 'Bud', depositAmount: '', price: '', shipWindow: '', variants: ['agent', 'companion'], analytics: true },
     window.BUD_CONFIG || {}
   );
   const $ = (s, r) => (r || document).querySelector(s);
@@ -120,9 +120,11 @@
   /* ------------------------------------------------------------- config */
 
   function applyConfig() {
+    // a value not set yet hides what shows it (its row, if it's in one), rather than saying "TBD"
     $$('[data-cfg]').forEach((el) => {
       const v = CFG[el.dataset.cfg];
-      el.textContent = v ? String(v) : 'TBD';
+      if (v) el.textContent = String(v);
+      else (el.closest('dl > div') || el).hidden = true;
     });
     if (CFG.contactEmail) {
       const line = $('#contactLine');
@@ -1046,7 +1048,7 @@
         </div>
         <div class="film-end">
           <button class="btn btn-line btn-sm" type="button" data-film-again>Watch again</button>
-          <a class="btn btn-light btn-sm" href="#reserve" data-track="film_reserve"><span data-v="agent">Reserve Bud</span><span data-v="companion">Reserve yours</span></a>
+          <a class="btn btn-light btn-sm" href="#reserve" data-track="film_reserve"><span data-v="agent">Join the waitlist</span><span data-v="companion">Get yours first</span></a>
         </div>
         <div class="film-progress" aria-hidden="true"><i></i></div>`
       );
@@ -1194,7 +1196,10 @@
     const note = $('#reserveNote');
     mountBud($('#reserveBud'), { state: 'hello' }, { follow: true });
     setAura($('#reserveAura'), 'hello');
-    if (checkoutUrl()) {
+    // a deposit button, when the page has one (none since 2026-10-30: the waitlist comes first)
+    if (!btn) {
+      /* nothing to set up */
+    } else if (checkoutUrl()) {
       btn.href = checkoutUrl();
       btn.rel = 'noopener';
       btn.addEventListener('click', () => (btn.href = checkoutUrl()));
