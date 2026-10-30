@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en" data-variant="agent">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bud</title>
+<meta name="description" content="Bud is a tiny AI agent that lives on the back of your phone. Flip your phone to wake it, tap to talk, and watch it get done. Reserve with a refundable deposit.">
+<meta name="theme-color" content="#000000">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Bud. Flip. Talk. Done.">
+<meta property="og:description" content="A tiny AI agent that lives on the back of your phone.">
+<meta property="og:url" content="https://meetbud.app/">
+<meta property="og:image" content="https://meetbud.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..900&family=Nunito:wght@700..900&display=swap">
+<link rel="stylesheet" href="landing.css">
+<script>
+  // A/B variant before first paint: ?v= forces one, otherwise keep the visitor's or pick at random.
+  (function () {
+    var vs = ['agent', 'companion'];
+    var v = null;
+    try { v = new URLSearchParams(location.search).get('v'); } catch (e) {}
+    if (vs.indexOf(v) < 0) { try { v = JSON.parse(localStorage.getItem('bud.variant')); } catch (e) {} }
+    if (vs.indexOf(v) < 0) v = Math.random() < 0.5 ? 'agent' : 'companion';
+    try { localStorage.setItem('bud.variant', JSON.stringify(v)); } catch (e) {}
+    document.documentElement.setAttribute('data-variant', v);
+  })();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="nav-in">
+    <a class="logo" href="#top" aria-label="Bud, back to top">
+      <span class="logo-bud" id="navBud" aria-hidden="true"></span>
+      <span class="wordmark">bud</span>
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#yours">Make it yours</a>
+    </nav>
+    <a class="btn btn-light btn-sm" href="#reserve" data-track="nav_reserve">Reserve</a>
+  </div>
+</header>
+
+<main id="main">
+  <!-- ============================================================ hero -->
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="hero-head">
+      <p class="eyebrow"><span class="led"></span><span data-v="agent">An AI agent with a face</span><span data-v="companion">Meet Bud</span></p>
+      <h1 id="hero-title" class="hero-title">
+        <span data-v="agent" class="t-agent"><span class="hw" data-word="flip">Flip.</span> <span class="hw" data-word="talk">Talk.</span> <span class="hw" data-word="done">Done.</span></span>
+        <span data-v="companion" class="t-companion">Your phone has a <span class="hw" data-word="face">face</span> now.</span>
+      </h1>
+    </div>
+    <div class="hero-stage">
+      <div class="aura" id="heroAura" aria-hidden="true"></div>
+      <button class="bud bud-hero" id="heroBud" type="button" aria-label="Tap Bud to see it work">
+        <span class="bud-glass"><span class="bud-screen"></span></span>
+      </button>
+      <p class="say" id="heroSay" aria-live="off"></p>
+      <p class="tap-hint" id="tapHint"><span class="ring" aria-hidden="true"></span>Tap Bud</p>
+    </div>
+    <div class="hero-body">
+      <p class="lede" data-v="agent">Bud is a tiny AI agent that lives on the back of your phone. Flip your phone to wake it, tap to talk, and watch it get done.</p>
+      <p class="lede" data-v="companion">Bud is a little AI friend that lives on the back of your phone. It listens, thinks, gets excited, and gets things done for you.</p>
+      <div class="cta-row">
+        <a class="btn btn-light btn-lg" href="#reserve" data-track="hero_reserve"><span data-v="agent">Reserve Bud</span><span data-v="companion">Reserve yours</span></a>
+        <button class="btn btn-line btn-lg" type="button" data-film-open data-track="hero_film">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>Watch the film
+        </button>
+      </div>
+      <p class="fine">Refundable deposit. Ships <span data-cfg="shipWindow">TBD</span>.</p>
+    </div>
+    <a class="scroll-cue" id="scrollCue" href="#onphone" aria-label="Scroll to see Bud on a phone"><span class="wheel" aria-hidden="true"></span>Scroll</a>
+  </section>
+
+  <!-- ===================================================== on the phone -->
+  <section class="onphone paper" id="onphone" aria-label="Bud on the back of a phone">
+    <div class="onphone-sticky">
+      <div class="onphone-view" id="onphone3d" aria-hidden="true"></div>
+      <div class="onphone-flat" id="onphoneFlat" hidden></div>
+      <div class="onphone-caps">
+        <p class="cap on" data-cap="0">Flip your phone.</p>
+        <p class="cap" data-cap="1">Bud lives on the back.<small>It wakes up when you flip to it.</small></p>
+        <p class="cap" data-cap="2">Below the camera.<br>Out of the way.</p>
+        <p class="cap" data-cap="3">Slim by design.<small>Final dimensions TBD.</small></p>
+        <p class="cap" data-cap="4">One flip away,<br>wherever your phone goes.</p>
+      </div>
+      <div class="onphone-progress" aria-hidden="true"><i></i></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ story -->
+  <section class="story ink" id="how" aria-labelledby="story-title">
+    <header class="sec-head rv">
+      <p class="eyebrow">How it works</p>
+      <h2 id="story-title">One tap. One sentence. Handled.</h2>
+      <p class="sub">Bud shows you what it is doing while it works, so you never have to wonder.</p>
+    </header>
+    <div class="story-grid">
+      <div class="story-stage">
+        <div class="story-sticky">
+          <div class="aura" id="storyAura" aria-hidden="true"></div>
+          <div class="bud bud-story" id="storyBud" role="img" aria-label="Bud, showing the current step">
+            <span class="bud-glass"><span class="bud-screen"></span></span>
+          </div>
+          <p class="state-pill" id="storyPill"><span class="led"></span><span class="lbl">Hello</span></p>
+        </div>
+      </div>
+      <ol class="story-steps">
+        <li class="step" data-state="hello">
+          <p class="st">Hello</p>
+          <p class="line">Flip your phone.</p>
+          <p class="note">Bud wakes up with a wink. Tap it to talk.</p>
+        </li>
+        <li class="step" data-state="listening">
+          <p class="st">Listening</p>
+          <p class="line quote">“Move my 3pm with Sam to tomorrow.”</p>
+          <p class="note">Its eyes turn blue while it listens.</p>
+        </li>
+        <li class="step" data-state="thinking">
+          <p class="st">Thinking</p>
+          <p class="line">Got it.</p>
+          <p class="note">Orange means it is working out what you meant.</p>
+        </li>
+        <li class="step" data-state="working">
+          <p class="st">Working</p>
+          <p class="line">Checking both calendars.</p>
+          <p class="note">A ring fills the edge as it goes.</p>
+        </li>
+        <li class="step" data-state="needsyou">
+          <p class="st">Needs you</p>
+          <p class="line quote">“Sam is free at 11. Move it there?”</p>
+          <p class="note">Anything important waits for your OK. A tap says yes.</p>
+        </li>
+        <li class="step" data-state="done">
+          <p class="st">Done</p>
+          <p class="line">Moved to 11 tomorrow. Invite sent.</p>
+          <div class="result" aria-label="Example calendar update">
+            <span class="r-app">Calendar</span>
+            <b>Catch-up with Sam</b>
+            <span class="r-when">Tomorrow, 11:00 AM</span>
+            <span class="r-ok">Invite sent</span>
+          </div>
+        </li>
+        <li class="step" data-state="love">
+          <p class="st">Love</p>
+          <p class="line quote">“Thanks, Bud.”</p>
+          <p class="note">It likes that.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================================================= uses -->
+  <section class="uses paper" aria-labelledby="uses-title">
+    <header class="sec-head rv">
+      <p class="eyebrow">Things to ask</p>
+      <h2 id="uses-title">Hand off the small stuff.</h2>
+      <p class="sub">Ask out loud and get back to your day. Bud’s face tells you where things stand.</p>
+    </header>
+    <div class="use-grid">
+      <article class="use rv" data-state="done">
+        <div class="bud bud-xs" role="img" aria-label="Bud, done"><span class="bud-glass"><span class="bud-screen"></span></span></div>
+        <p class="q">“Remind me to call Mom at&nbsp;6.”</p>
+        <p class="r" style="--c: var(--done-ink)"><span class="led"></span>Done<span class="r-t">Reminder set</span></p>
+      </article>
+      <article class="use rv" data-state="working">
+        <div class="bud bud-xs" role="img" aria-label="Bud, working"><span class="bud-glass"><span class="bud-screen"></span></span></div>
+        <p class="q">“Push my dentist appointment to next week.”</p>
+        <p class="r" style="--c: var(--work-ink)"><span class="led"></span>Working<span class="r-t">Checking open times</span></p>
+      </article>
+      <article class="use rv" data-state="needsyou">
+        <div class="bud bud-xs" role="img" aria-label="Bud, waiting for your OK"><span class="bud-glass"><span class="bud-screen"></span></span></div>
+        <p class="q">“Book a table for four tonight.”</p>
+        <p class="r" style="--c: var(--needs)"><span class="led"></span>Needs you<span class="r-t">7:00 or 8:30?</span></p>
+      </article>
+    </div>
+    <p class="foot rv">Example requests. Which apps and services Bud works with at launch is TBD.</p>
+  </section>
+
+  <!-- ========================================================== privacy -->
+  <section class="privacy ink" id="privacy" aria-labelledby="privacy-title">
+    <div class="privacy-grid">
+      <div class="privacy-stage">
+        <div class="aura" id="privacyAura" aria-hidden="true"></div>
+        <div class="bud bud-md" id="privacyBud" role="img" aria-label="Bud listening, with its mic light on">
+          <span class="bud-glass"><span class="bud-screen"></span></span>
+          <span class="mic-light" aria-hidden="true"></span>
+          <span class="mic-callout" aria-hidden="true"><span>Mic light</span></span>
+        </div>
+        <button class="mic-toggle" id="micToggle" type="button" aria-pressed="true">
+          <span class="mt-track"><span class="mt-knob"></span></span><span class="mt-label">Mic on</span>
+        </button>
+      </div>
+      <div class="privacy-copy rv">
+        <p class="eyebrow">Privacy</p>
+        <h2 id="privacy-title">Mic on, light on.</h2>
+        <p class="sub">Bud is designed with a small light wired to its microphone, like the camera light on a laptop. When the mic has power, the light is on, and no software can switch it off.</p>
+        <ul class="principles">
+          <li><h3>Listens when you tap.</h3><p>Bud is designed to listen when you ask it to, not before.</p></li>
+          <li><h3>Asks before it acts.</h3><p>Sending, booking and buying wait for your OK.</p></li>
+        </ul>
+        <p class="foot">The mic light is part of the planned hardware design. Full privacy details will be published before launch.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== make it yours -->
+  <section class="yours paper" id="yours" aria-labelledby="yours-title">
+    <header class="sec-head rv">
+      <p class="eyebrow">Make it yours</p>
+      <h2 id="yours-title">Pick a look. Pick a color. Name it.</h2>
+    </header>
+    <div class="yours-grid">
+      <div class="yours-stage">
+        <div class="bud bud-yours" id="yoursBud" role="img" aria-label="Your Bud with the chosen look and color"><span class="bud-glass"><span class="bud-screen"></span></span></div>
+        <p class="nameplate">This is <b id="namePlate">Bud</b>.</p>
+      </div>
+      <div class="yours-controls">
+        <fieldset>
+          <legend>Look</legend>
+          <div class="chips" id="looks"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Shell <span class="legend-val" id="shellName">Cloud</span></legend>
+          <div class="swatches" id="shells"></div>
+        </fieldset>
+        <div class="field">
+          <label for="nameInput">Name</label>
+          <input id="nameInput" type="text" maxlength="16" value="Bud" autocomplete="off" spellcheck="false">
+        </div>
+        <button class="btn btn-dark btn-lg" id="cardBtn" type="button" data-track="card_open">Make my Bud card</button>
+        <p class="foot">Looks and colors are concepts. Which ones come with Bud at launch is TBD.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================= film -->
+  <section class="film ink" id="film" aria-labelledby="film-title">
+    <div class="film-grid">
+      <header class="sec-head rv">
+        <p class="eyebrow">The film</p>
+        <h2 id="film-title">Thirty seconds with Bud.</h2>
+        <p class="sub" id="filmSub">Our 30-second film is in production. Until it is ready, here is the animatic.</p>
+        <ol class="film-chapters" id="filmChapters" hidden></ol>
+      </header>
+      <div class="film-frame" id="filmFrame">
+        <div class="anim" id="anim" aria-live="off">
+          <div class="anim-bg" id="animBg"></div>
+          <p class="anim-scene" id="animScene">Animatic</p>
+          <p class="anim-time" id="animTime">0:00</p>
+          <div class="bud bud-anim" id="animBud" role="img" aria-label="Bud in the animatic"><span class="bud-glass"><span class="bud-screen"></span></span></div>
+          <p class="anim-line" id="animLine">A phone lies face down on a café table. On its back, Bud blinks.</p>
+          <div class="anim-bar" aria-hidden="true"><i id="animBar"></i></div>
+        </div>
+        <button class="film-play" id="filmPlay" type="button" data-track="film_play">
+          <span class="fp-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
+          <span class="fp-lbl">Play the animatic</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ specs -->
+  <section class="specs paper" id="specs" aria-labelledby="specs-title">
+    <header class="sec-head rv">
+      <p class="eyebrow">Tech specs</p>
+      <h2 id="specs-title">The details.</h2>
+      <p class="sub">We will publish final specs before anything ships. Until then, we won’t guess.</p>
+    </header>
+    <dl class="spec-list rv">
+      <div><dt>Display</dt><dd>Round color screen. Type TBD.</dd></div>
+      <div><dt>Size</dt><dd>TBD</dd></div>
+      <div><dt>Thickness</dt><dd>TBD. Designed to be slim.</dd></div>
+      <div><dt>Weight</dt><dd>TBD</dd></div>
+      <div><dt>Battery life</dt><dd>TBD</dd></div>
+      <div><dt>Charging</dt><dd>USB-C (planned)</dd></div>
+      <div><dt>Connectivity</dt><dd>Bluetooth to your phone (planned)</dd></div>
+      <div><dt>Build</dt><dd>Aluminum and glass (planned)</dd></div>
+      <div><dt>Water</dt><dd>Splash resistant (planned)</dd></div>
+      <div><dt>Controls</dt><dd>Flip to wake, tap to talk (planned)</dd></div>
+      <div><dt>Mic light</dt><dd>Wired to the mic, on whenever it can hear (planned)</dd></div>
+      <div><dt>Works with</dt><dd>Planned for iPhone and Android. Final compatibility TBD.</dd></div>
+      <div><dt>Attaches</dt><dd>Magnetic, on the back of your phone, below the camera</dd></div>
+      <div><dt>Price</dt><dd data-cfg="price">TBD</dd></div>
+      <div><dt>Ships</dt><dd data-cfg="shipWindow">TBD</dd></div>
+      <div><dt>Deposit</dt><dd><span data-cfg="depositAmount">TBD</span>, fully refundable</dd></div>
+    </dl>
+  </section>
+
+  <!-- ========================================================== reserve -->
+  <section class="reserve ink" id="reserve" aria-labelledby="reserve-title">
+    <div class="aura aura-wide" id="reserveAura" aria-hidden="true"></div>
+    <div class="reserve-card rv">
+      <div class="reserve-bud"><div class="bud bud-md" id="reserveBud" role="img" aria-label="Bud saying hi"><span class="bud-glass"><span class="bud-screen"></span></span></div></div>
+      <div class="reserve-body">
+        <p class="eyebrow">Reserve</p>
+        <h2 id="reserve-title">Be first in line.</h2>
+        <p class="sub">Hold your place with a fully refundable deposit.</p>
+        <dl class="terms">
+          <div><dt>Deposit</dt><dd data-cfg="depositAmount">TBD</dd></div>
+          <div><dt>Price</dt><dd data-cfg="price">TBD</dd></div>
+          <div><dt>Ships</dt><dd data-cfg="shipWindow">TBD</dd></div>
+        </dl>
+        <a class="btn btn-light btn-lg" id="reserveBtn" href="#reserve" data-track="reserve_click">Reserve with a refundable deposit</a>
+        <p class="fine" id="reserveNote">Reservations open soon. Join the list and we will email you first.</p>
+        <form class="wait" id="waitForm" novalidate>
+          <div class="wait-row">
+            <label class="sr" for="waitEmail">Email</label>
+            <input id="waitEmail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+            <button class="btn btn-teal" type="submit">Notify me</button>
+          </div>
+          <label class="sr" for="waitInterest">What are you most excited about?</label>
+          <select id="waitInterest" name="interest">
+            <option value="">What are you most excited about? (optional)</option>
+            <option value="agent">Getting things done for me</option>
+            <option value="companion">A little companion on my phone</option>
+            <option value="both">Both</option>
+          </select>
+          <p class="wait-msg" id="waitMsg" role="status"></p>
+        </form>
+        <p class="fine">We will only email you about Bud.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== faq -->
+  <section class="faq paper" id="faq" aria-labelledby="faq-title">
+    <header class="sec-head rv">
+      <p class="eyebrow">FAQ</p>
+      <h2 id="faq-title">Questions, answered.</h2>
+    </header>
+    <div class="faq-list rv">
+      <details>
+        <summary>What is Bud?</summary>
+        <p>A small round device with a screen that sits on the back of your phone. Inside is an AI agent you talk to. Tap it, ask for something, and Bud works on it, showing you its progress with its face.</p>
+      </details>
+      <details>
+        <summary>What can it do?</summary>
+        <p>The everyday stuff: scheduling, reminders, messages, reservations, lists and quick answers. Which apps and services it works with at launch is TBD.</p>
+      </details>
+      <details>
+        <summary>Will it work with my phone?</summary>
+        <p>Bud is being designed for both iPhone and Android phones. Final compatibility is TBD.</p>
+      </details>
+      <details>
+        <summary>How does it attach?</summary>
+        <p>With magnets. It snaps onto the back of your phone, below the camera, and comes off when you want. Details for phones without built-in magnets are TBD.</p>
+      </details>
+      <details>
+        <summary>How do I see what Bud is doing?</summary>
+        <p>Flip your phone. Bud’s screen rests to save battery and wakes up when you flip to it or tap it.</p>
+      </details>
+      <details>
+        <summary>Is it always listening?</summary>
+        <p>No. Flipping your phone wakes Bud’s face, and it listens only when you tap it. Bud is designed with a light wired to its mic, so you can see whenever the mic is on.</p>
+      </details>
+      <details>
+        <summary>Does it work with the AI I already use?</summary>
+        <p>That is the plan. Bud is built to be the face of your agent, whichever one you use. Which agents it connects to at launch is TBD.</p>
+      </details>
+      <details>
+        <summary>How much is it, and when does it ship?</summary>
+        <p>Price: <span data-cfg="price">TBD</span>. Ships: <span data-cfg="shipWindow">TBD</span>. Reserve or join the list to hear first.</p>
+      </details>
+      <details>
+        <summary>Is the deposit refundable?</summary>
+        <p>Yes. The deposit is fully refundable. You will see the full terms at checkout.</p>
+      </details>
+      <details>
+        <summary>Can I change how Bud looks?</summary>
+        <p>Looks change Bud’s colors and outfit, like a party hat or a pair of shades. Which looks come with Bud is TBD.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer class="footer ink">
+  <div class="footer-in">
+    <div class="footer-brand"><span class="wordmark">bud</span><p>Your AI, on the back of your phone.</p></div>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="#how">How it works</a>
+      <a href="#yours">Make it yours</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#specs">Tech specs</a>
+      <a href="#faq">FAQ</a>
+      <a href="#reserve">Reserve</a>
+    </nav>
+    <p class="legal">© 2026. Bud is in development. Names, features, looks and specs may change. Product images are renders.<span class="contact" id="contactLine" hidden></span></p>
+  </div>
+</footer>
+
+<dialog class="card-dlg" id="cardDlg" aria-labelledby="cardDlgTitle">
+  <div class="card-dlg-in">
+    <h2 id="cardDlgTitle" class="sr">Your Bud card</h2>
+    <img id="cardImg" alt="">
+    <div class="card-actions">
+      <a class="btn btn-dark" id="cardSave" href="#" data-track="card_save">Save image</a>
+      <button class="btn btn-dark" id="cardShare" type="button" data-track="card_share" hidden>Share</button>
+      <button class="btn btn-quiet" type="button" data-close>Close</button>
+    </div>
+    <p class="card-hint" id="cardHint"></p>
+  </div>
+</dialog>
+
+<div class="vswitch" id="vswitch" hidden>
+  <span>A/B preview</span>
+  <button type="button" data-set-variant="agent">Agent</button>
+  <button type="button" data-set-variant="companion">Companion</button>
+</div>
+
+<script src="config.js"></script>
+<!-- shared character library from the concept explorer -->
+<!-- lib/files.json: face, phones, devices (tools/lib-files.mjs writes these tags) -->
+<script src="../lib/core.js"></script>
+<script src="../lib/themes.js"></script>
+<script src="../lib/states/_kit.js"></script>
+<script src="../lib/states/charging.js"></script>
+<script src="../lib/states/cold.js"></script>
+<script src="../lib/states/confused.js"></script>
+<script src="../lib/states/dizzy.js"></script>
+<script src="../lib/states/done.js"></script>
+<script src="../lib/states/hello.js"></script>
+<script src="../lib/states/hot.js"></script>
+<script src="../lib/states/idle.js"></script>
+<script src="../lib/states/listening.js"></script>
+<script src="../lib/states/love.js"></script>
+<script src="../lib/states/lowbattery.js"></script>
+<script src="../lib/states/needsyou.js"></script>
+<script src="../lib/states/privacy.js"></script>
+<script src="../lib/states/recording.js"></script>
+<script src="../lib/states/sleeping.js"></script>
+<script src="../lib/states/speaking.js"></script>
+<script src="../lib/states/thinking.js"></script>
+<script src="../lib/states/working.js"></script>
+<script src="../lib/pose.js"></script>
+<script src="../lib/fidgets.js"></script>
+<script src="../lib/transitions.js"></script>
+<script src="../lib/face.js"></script>
+<script src="../lib/fx.js"></script>
+<script src="../lib/ambients/bats.js"></script>
+<script src="../lib/ambients/confetti.js"></script>
+<script src="../lib/ambients/fireflies.js"></script>
+<script src="../lib/ambients/notes.js"></script>
+<script src="../lib/ambients/petals.js"></script>
+<script src="../lib/ambients/rain.js"></script>
+<script src="../lib/ambients/snow.js"></script>
+<script src="../lib/ambients/sparkles.js"></script>
+<script src="../lib/ambients/stars.js"></script>
+<script src="../lib/accessories/_kit.js"></script>
+<script src="../lib/accessories/face/divingGoggles.js"></script>
+<script src="../lib/accessories/face/operaGlasses.js"></script>
+<script src="../lib/accessories/face/roundGlasses.js"></script>
+<script src="../lib/accessories/face/snorkelMask.js"></script>
+<script src="../lib/accessories/face/starGlasses.js"></script>
+<script src="../lib/accessories/face/sunglasses.js"></script>
+<script src="../lib/accessories/head/ballCap.js"></script>
+<script src="../lib/accessories/head/beanie.js"></script>
+<script src="../lib/accessories/head/beret.js"></script>
+<script src="../lib/accessories/head/blossom.js"></script>
+<script src="../lib/accessories/head/boater.js"></script>
+<script src="../lib/accessories/head/bucketHat.js"></script>
+<script src="../lib/accessories/head/bunnyEars.js"></script>
+<script src="../lib/accessories/head/busby.js"></script>
+<script src="../lib/accessories/head/catEars.js"></script>
+<script src="../lib/accessories/head/cowboyHat.js"></script>
+<script src="../lib/accessories/head/crown.js"></script>
+<script src="../lib/accessories/head/edelweiss.js"></script>
+<script src="../lib/accessories/head/gat.js"></script>
+<script src="../lib/accessories/head/headphones.js"></script>
+<script src="../lib/accessories/head/laurelWreath.js"></script>
+<script src="../lib/accessories/head/newsboyCap.js"></script>
+<script src="../lib/accessories/head/partyHat.js"></script>
+<script src="../lib/accessories/head/pirateHat.js"></script>
+<script src="../lib/accessories/head/rangerHat.js"></script>
+<script src="../lib/accessories/head/strawHat.js"></script>
+<script src="../lib/accessories/head/tricornHat.js"></script>
+<script src="../lib/accessories/head/umbrella.js"></script>
+<script src="../lib/accessories/head/witch.js"></script>
+<script src="../lib/accessories/item/acorn.js"></script>
+<script src="../lib/accessories/item/bagel.js"></script>
+<script src="../lib/accessories/item/balloon.js"></script>
+<script src="../lib/accessories/item/banhMi.js"></script>
+<script src="../lib/accessories/item/beachBall.js"></script>
+<script src="../lib/accessories/item/beignet.js"></script>
+<script src="../lib/accessories/item/bibimbap.js"></script>
+<script src="../lib/accessories/item/blueberries.js"></script>
+<script src="../lib/accessories/item/brush.js"></script>
+<script src="../lib/accessories/item/bubbleTea.js"></script>
+<script src="../lib/accessories/item/buchae.js"></script>
+<script src="../lib/accessories/item/bungeoppang.js"></script>
+<script src="../lib/accessories/item/bus.js"></script>
+<script src="../lib/accessories/item/cableCar.js"></script>
+<script src="../lib/accessories/item/cactus.js"></script>
+<script src="../lib/accessories/item/cannoli.js"></script>
+<script src="../lib/accessories/item/canoe.js"></script>
+<script src="../lib/accessories/item/chai.js"></script>
+<script src="../lib/accessories/item/cherryBranch.js"></script>
+<script src="../lib/accessories/item/chowder.js"></script>
+<script src="../lib/accessories/item/churro.js"></script>
+<script src="../lib/accessories/item/clownfish.js"></script>
+<script src="../lib/accessories/item/coffee.js"></script>
+<script src="../lib/accessories/item/cottonCandy.js"></script>
+<script src="../lib/accessories/item/croissant.js"></script>
+<script src="../lib/accessories/item/custardTart.js"></script>
+<script src="../lib/accessories/item/dango.js"></script>
+<script src="../lib/accessories/item/deepDish.js"></script>
+<script src="../lib/accessories/item/deer.js"></script>
+<script src="../lib/accessories/item/dimSum.js"></script>
+<script src="../lib/accessories/item/dolphin.js"></script>
+<script src="../lib/accessories/item/duckling.js"></script>
+<script src="../lib/accessories/item/eomuk.js"></script>
+<script src="../lib/accessories/item/flamingo.js"></script>
+<script src="../lib/accessories/item/gelato.js"></script>
+<script src="../lib/accessories/item/giraffe.js"></script>
+<script src="../lib/accessories/item/globes.js"></script>
+<script src="../lib/accessories/item/goldenGate.js"></script>
+<script src="../lib/accessories/item/guitar.js"></script>
+<script src="../lib/accessories/item/gyeongjuBread.js"></script>
+<script src="../lib/accessories/item/hallabong.js"></script>
+<script src="../lib/accessories/item/hareubang.js"></script>
+<script src="../lib/accessories/item/kimbap.js"></script>
+<script src="../lib/accessories/item/koala.js"></script>
+<script src="../lib/accessories/item/lantern.js"></script>
+<script src="../lib/accessories/item/libertyBell.js"></script>
+<script src="../lib/accessories/item/library.js"></script>
+<script src="../lib/accessories/item/lighthouse.js"></script>
+<script src="../lib/accessories/item/llama.js"></script>
+<script src="../lib/accessories/item/lotus.js"></script>
+<script src="../lib/accessories/item/loveLock.js"></script>
+<script src="../lib/accessories/item/manatee.js"></script>
+<script src="../lib/accessories/item/mapleSyrup.js"></script>
+<script src="../lib/accessories/item/matcha.js"></script>
+<script src="../lib/accessories/item/mintTea.js"></script>
+<script src="../lib/accessories/item/mosaicLizard.js"></script>
+<script src="../lib/accessories/item/onigiri.js"></script>
+<script src="../lib/accessories/item/orchid.js"></script>
+<script src="../lib/accessories/item/panda.js"></script>
+<script src="../lib/accessories/item/paperBoat.js"></script>
+<script src="../lib/accessories/item/penguin.js"></script>
+<script src="../lib/accessories/item/pennants.js"></script>
+<script src="../lib/accessories/item/pouch.js"></script>
+<script src="../lib/accessories/item/pretzel.js"></script>
+<script src="../lib/accessories/item/protea.js"></script>
+<script src="../lib/accessories/item/puffin.js"></script>
+<script src="../lib/accessories/item/pumpkin.js"></script>
+<script src="../lib/accessories/item/ramyeon.js"></script>
+<script src="../lib/accessories/item/rocket.js"></script>
+<script src="../lib/accessories/item/sailboat.js"></script>
+<script src="../lib/accessories/item/seaTurtle.js"></script>
+<script src="../lib/accessories/item/showTicket.js"></script>
+<script src="../lib/accessories/item/slideRule.js"></script>
+<script src="../lib/accessories/item/spyglass.js"></script>
+<script src="../lib/accessories/item/surfboard.js"></script>
+<script src="../lib/accessories/item/swan.js"></script>
+<script src="../lib/accessories/item/swimRing.js"></script>
+<script src="../lib/accessories/item/taco.js"></script>
+<script src="../lib/accessories/item/takoyaki.js"></script>
+<script src="../lib/accessories/item/teacup.js"></script>
+<script src="../lib/accessories/item/telescope.js"></script>
+<script src="../lib/accessories/item/torch.js"></script>
+<script src="../lib/accessories/item/tteokbokki.js"></script>
+<script src="../lib/accessories/item/tulip.js"></script>
+<script src="../lib/accessories/item/waffle.js"></script>
+<script src="../lib/accessories/neck/bestBuds.js"></script>
+<script src="../lib/accessories/neck/bowtie.js"></script>
+<script src="../lib/accessories/neck/crimsonScarf.js"></script>
+<script src="../lib/accessories/neck/lei.js"></script>
+<script src="../lib/accessories/neck/norigae.js"></script>
+<script src="../lib/accessories/neck/saekdong.js"></script>
+<script src="../lib/accessories/neck/scarf.js"></script>
+<script src="../lib/accessories/neck/schoolScarves.js"></script>
+<script src="../lib/accessories/neck/tartanScarf.js"></script>
+<script src="../lib/looks.js"></script>
+<script src="../lib/characters/eyes.js"></script>
+<script src="../lib/characters/skins.js"></script>
+<script src="../lib/screen.js"></script>
+<script src="../lib/phones.js"></script>
+<script src="../lib/forms.js"></script>
+<script src="../lib/device.js"></script>
+<script src="../lib/view3d.js"></script>
+<!-- end of lib/files.json -->
+<script src="landing.js"></script>
+</body>
+</html>
