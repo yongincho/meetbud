@@ -26,7 +26,7 @@ window.BUD_CONFIG = {
 
   // Shown on the share card and in the footer when set, for example 'getbud.com'.
   siteUrl: 'meetbud.app',
-  contactEmail: '',
+  contactEmail: 'hello@meetbud.app',
 
   // A/B test: 'agent' (gets things done) vs 'companion' (a little friend).
   // ?v=agent or ?v=companion forces one; otherwise each visitor gets one at random and keeps it.
