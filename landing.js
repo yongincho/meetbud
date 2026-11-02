@@ -4,19 +4,18 @@
  * the faces, colors and transitions here are the ones the device will show. This file
  * wires them to the page: the hero demo and cursor-following eyes, the scroll-driven 3D
  * reveal, the story, the try-on and share card, the film (or its animatic), reservations,
- * the email list and the A/B variant with dataLayer events.
+ * the email list, with dataLayer events.
  */
 (function () {
   'use strict';
   const K = window.Bud;
   const U = K.util;
   const CFG = Object.assign(
-    { name: 'Bud', depositAmount: '', price: '', shipWindow: '', variants: ['agent', 'companion'], analytics: true },
+    { name: 'Bud', depositAmount: '', price: '', shipWindow: '', analytics: true },
     window.BUD_CONFIG || {}
   );
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
-  const root = document.documentElement;
   const IN_ARTIFACT = !!(window.claude && typeof window.claude.use === 'function');
   const mq = (q) => !!(window.matchMedia && window.matchMedia(q).matches);
   const REDUCED = mq('(prefers-reduced-motion: reduce)');
@@ -49,10 +48,12 @@
 
   /* ------------------------------------------------------------ analytics */
 
-  const variant = () => (CFG.variants.indexOf(root.dataset.variant) >= 0 ? root.dataset.variant : 'agent');
+  // The page's one version since the A/B test with "Flip. Talk. Done." ended (2026-11-02), still
+  // named in events, payment references and sign-ups so they line up with the test's.
+  const VARIANT = 'companion';
   function track(event, data) {
     if (!CFG.analytics) return;
-    (window.dataLayer = window.dataLayer || []).push(Object.assign({ event, variant: variant() }, data || {}));
+    (window.dataLayer = window.dataLayer || []).push(Object.assign({ event, variant: VARIANT }, data || {}));
   }
   document.addEventListener('click', (e) => {
     const t = e.target.closest && e.target.closest('[data-track]');
@@ -162,14 +163,7 @@
 
   function lightWords(st) {
     $$('.hw').forEach((w) => w.classList.remove('lit'));
-    if (variant() === 'agent') {
-      const word = { hello: 'flip', listening: 'talk', thinking: 'talk', done: 'done' }[st];
-      const el = word && $(`.hw[data-word="${word}"]`);
-      if (el) {
-        el.style.setProperty('--c', word === 'flip' ? TEAL : tintOf(st === 'thinking' ? 'listening' : st));
-        el.classList.add('lit');
-      }
-    } else if (st !== 'idle') {
+    if (st !== 'idle') {
       const el = $('.hw[data-word="face"]');
       el.style.setProperty('--c', tintOf(st));
       el.classList.add('lit');
@@ -661,7 +655,7 @@
     g.fillText(title, W / 2, 1040);
     g.fillStyle = '#A4A5AD';
     g.font = '500 40px Figtree, system-ui, sans-serif';
-    g.fillText(variant() === 'companion' ? 'My AI has a face now.' : 'My AI, on the back of my phone.', W / 2, 1108);
+    g.fillText('My AI has a face now.', W / 2, 1108);
     g.fillStyle = '#F5F5F7';
     g.font = '900 64px Nunito, "Arial Rounded MT Bold", system-ui, sans-serif';
     g.fillText('bud', W / 2, 1238);
@@ -1048,7 +1042,7 @@
         </div>
         <div class="film-end">
           <button class="btn btn-line btn-sm" type="button" data-film-again>Watch again</button>
-          <a class="btn btn-light btn-sm" href="#reserve" data-track="film_reserve"><span data-v="agent">Join the waitlist</span><span data-v="companion">Get yours first</span></a>
+          <a class="btn btn-light btn-sm" href="#reserve" data-track="film_reserve">Get yours first</a>
         </div>
         <div class="film-progress" aria-hidden="true"><i></i></div>`
       );
@@ -1183,7 +1177,7 @@
     try {
       const u = new URL(link);
       // ties the payment back to the landing variant (Stripe allows letters, digits, _ and -)
-      u.searchParams.set('client_reference_id', `lp_${variant()}_${refId}`);
+      u.searchParams.set('client_reference_id', `lp_${VARIANT}_${refId}`);
       const tags = utm();
       Object.keys(tags).forEach((k) => u.searchParams.set(k, tags[k]));
       return u.toString();
@@ -1240,7 +1234,7 @@
         const r = await fetch(CFG.waitlistEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, interest, variant: variant(), utm: utm(), ts: new Date().toISOString() }),
+          body: JSON.stringify({ email, interest, variant: VARIANT, utm: utm(), ts: new Date().toISOString() }),
         });
         if (!r.ok) throw new Error(String(r.status));
         say('You’re on the list. We will email you first.', 'ok');
@@ -1295,23 +1289,6 @@
     });
   }
 
-  function setupVariantSwitch() {
-    const sw = $('#vswitch');
-    if (!(IN_ARTIFACT || query().has('preview'))) return;
-    sw.hidden = false;
-    const paint = () => $$('[data-set-variant]', sw).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.setVariant === variant())));
-    $$('[data-set-variant]', sw).forEach((b) =>
-      b.addEventListener('click', () => {
-        root.dataset.variant = b.dataset.setVariant;
-        store.set('bud.variant', b.dataset.setVariant);
-        paint();
-        heroRun(false);
-        track('variant_preview');
-      })
-    );
-    paint();
-  }
-
   let ticking = false;
   function onScroll() {
     ticking = false;
@@ -1335,7 +1312,6 @@
 
   function boot() {
     applyConfig();
-    track('experiment_impression', { experiment: 'lp_positioning' });
     navBud = new K.Screen($('#navBud'), { fps: 30, bloom: false });
     navBud.set({ character: 'eyes', theme: 'classic', state: 'idle', oled: true, glow: false, shape: { type: 'circle' }, stage: {}, variety: !REDUCED });
     setupHero();
@@ -1347,7 +1323,6 @@
     setupDialog();
     setupFilm();
     setupReserve();
-    setupVariantSwitch();
     setupReveal();
     $$('.faq-list details').forEach((d) =>
       d.addEventListener('toggle', () => d.open && track('faq_open', { question: d.querySelector('summary').textContent }))

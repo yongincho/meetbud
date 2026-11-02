@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-variant="agent">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,7 +7,7 @@
 <meta name="description" content="Bud is a tiny AI agent that lives on the back of your phone. Flip your phone to wake it, say “Hey Bud”, and watch it get done. A working prototype today; join the waitlist.">
 <meta name="theme-color" content="#000000">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Bud. Flip. Talk. Done.">
+<meta property="og:title" content="Bud. Your AI has a face now.">
 <meta property="og:description" content="A tiny AI agent that lives on the back of your phone.">
 <meta property="og:url" content="https://meetbud.app/">
 <meta property="og:image" content="https://meetbud.app/og.png">
@@ -19,18 +19,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..900&family=Nunito:wght@700..900&display=swap">
 <link rel="stylesheet" href="landing.css">
-<script>
-  // A/B variant before first paint: ?v= forces one, otherwise keep the visitor's or pick at random.
-  (function () {
-    var vs = ['agent', 'companion'];
-    var v = null;
-    try { v = new URLSearchParams(location.search).get('v'); } catch (e) {}
-    if (vs.indexOf(v) < 0) { try { v = JSON.parse(localStorage.getItem('bud.variant')); } catch (e) {} }
-    if (vs.indexOf(v) < 0) v = Math.random() < 0.5 ? 'agent' : 'companion';
-    try { localStorage.setItem('bud.variant', JSON.stringify(v)); } catch (e) {}
-    document.documentElement.setAttribute('data-variant', v);
-  })();
-</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -53,10 +41,9 @@
   <!-- ============================================================ hero -->
   <section class="hero" id="top" aria-labelledby="hero-title">
     <div class="hero-head">
-      <p class="eyebrow"><span class="led"></span><span data-v="agent">An AI agent with a face</span><span data-v="companion">Meet Bud</span></p>
+      <p class="eyebrow"><span class="led"></span>Meet Bud</p>
       <h1 id="hero-title" class="hero-title">
-        <span data-v="agent" class="t-agent"><span class="hw" data-word="flip">Flip.</span> <span class="hw" data-word="talk">Talk.</span> <span class="hw" data-word="done">Done.</span></span>
-        <span data-v="companion" class="t-companion">Your AI has a <span class="hw" data-word="face">face</span> now.</span>
+        <span class="t-companion">Your AI has a <span class="hw" data-word="face">face</span> now.</span>
       </h1>
     </div>
     <div class="hero-stage">
@@ -68,10 +55,9 @@
       <p class="tap-hint" id="tapHint"><span class="ring" aria-hidden="true"></span>Tap Bud</p>
     </div>
     <div class="hero-body">
-      <p class="lede" data-v="agent">Bud is a tiny AI agent that lives on the back of your phone. Flip your phone to wake it, tap to talk, and watch it get done.</p>
-      <p class="lede" data-v="companion">Bud is a little AI friend that lives on the back of your phone. It listens, thinks, gets excited, and gets things done for you.</p>
+      <p class="lede">Bud is a little AI friend that lives on the back of your phone. It listens, thinks, gets excited, and gets things done for you.</p>
       <div class="cta-row">
-        <a class="btn btn-light btn-lg" href="#reserve" data-track="hero_reserve"><span data-v="agent">Join the waitlist</span><span data-v="companion">Get yours first</span></a>
+        <a class="btn btn-light btn-lg" href="#reserve" data-track="hero_reserve">Get yours first</a>
         <button class="btn btn-line btn-lg" type="button" data-film-open data-track="hero_film">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>Watch the film
         </button>
@@ -400,11 +386,6 @@
   </div>
 </dialog>
 
-<div class="vswitch" id="vswitch" hidden>
-  <span>A/B preview</span>
-  <button type="button" data-set-variant="agent">Agent</button>
-  <button type="button" data-set-variant="companion">Companion</button>
-</div>
 
 <script src="config.js"></script>
 <!-- shared character library from the concept explorer -->

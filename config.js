@@ -30,10 +30,6 @@ window.BUD_CONFIG = {
   siteUrl: 'meetbud.app',
   contactEmail: 'hello@meetbud.app',
 
-  // A/B test: 'agent' (gets things done) vs 'companion' (a little friend).
-  // ?v=agent or ?v=companion forces one; otherwise each visitor gets one at random and keeps it.
-  variants: ['agent', 'companion'],
-
   // Push events to window.dataLayer (Google Tag Manager and most analytics tools read it).
   analytics: true,
 };

@@ -70,9 +70,6 @@ p { margin: 0; }
 .skip { position: fixed; left: 12px; top: -48px; z-index: 50; padding: 10px 14px; border-radius: 10px; background: var(--ink); color: var(--oled); font-weight: 600; transition: top 0.2s; }
 .skip:focus { top: calc(10px + env(safe-area-inset-top, 0px)); }
 
-/* A/B copy: both versions ship in the HTML, the variant decides which shows */
-[data-variant="agent"] [data-v="companion"],
-[data-variant="companion"] [data-v="agent"] { display: none !important; }
 
 /* ------------------------------------------------------------ type */
 .wordmark { font: 900 26px/1 var(--word); letter-spacing: -0.04em; }
@@ -630,17 +627,6 @@ section[id] { scroll-margin-top: var(--nav-h); }
 .card-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .card-hint { text-align: center; font-size: 14px; color: var(--type-3); }
 
-/* ---------------------------------------------------- variant preview */
-.vswitch {
-  position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 40; opacity: 0.72; transition: opacity 0.2s;
-  display: flex; align-items: center; gap: 4px; padding: 5px 5px 5px 14px; border-radius: 999px;
-  background: rgba(22, 23, 27, 0.86); border: 1px solid var(--line-dark); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-  font: 600 11px/1 var(--label); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);
-}
-.vswitch span { margin-right: 8px; }
-.vswitch button { height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-2); cursor: pointer; font: 600 12px/1 var(--text); letter-spacing: 0; text-transform: none; }
-.vswitch button[aria-pressed="true"] { background: var(--ink); color: var(--oled); }
-
 /* ------------------------------------------------------------ reveal */
 .rv { transition: opacity 0.9s ease, transform 0.9s var(--ease); }
 .rv.pre { opacity: 0; transform: translateY(26px); }
@@ -650,7 +636,6 @@ section[id] { scroll-margin-top: var(--nav-h); }
   .rv.pre { opacity: 1; transform: none; }
 }
 
-.vswitch:hover, .vswitch:focus-within { opacity: 1; }
 @media (max-width: 860px) {
   .hero { padding-block: 24px 96px; }
 }
