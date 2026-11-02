@@ -661,7 +661,7 @@
     g.fillText(title, W / 2, 1040);
     g.fillStyle = '#A4A5AD';
     g.font = '500 40px Figtree, system-ui, sans-serif';
-    g.fillText(variant() === 'companion' ? 'My phone has a face now.' : 'My AI, on the back of my phone.', W / 2, 1108);
+    g.fillText(variant() === 'companion' ? 'My AI has a face now.' : 'My AI, on the back of my phone.', W / 2, 1108);
     g.fillStyle = '#F5F5F7';
     g.font = '900 64px Nunito, "Arial Rounded MT Bold", system-ui, sans-serif';
     g.fillText('bud', W / 2, 1238);
