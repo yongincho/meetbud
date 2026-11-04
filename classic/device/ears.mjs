@@ -101,7 +101,7 @@ export class BudEars {
     this.gust = false; // the last frame was mostly rumble
     this.pre = []; // recent quiet frames, newest last
     this.preMs = 0;
-    this.phrase = null; // { frames: [], ms, speechMs, quietMs }
+    this.phrase = null; // { frames: [], ms, pre (of ms, the quiet before it), speechMs, quietMs }
     this.sequence = 0;
   }
 
@@ -129,12 +129,28 @@ export class BudEars {
 
   // Always listening, the talk button pressed into this recording: from here it's held. A phrase
   // begun just before goes on into the held one (HOLD_KEEP_MS); otherwise it starts with the moment
-  // before the press, for a first syllable said as the button went down.
-  hold() {
+  // before the press, for a first syllable said as the button went down. `sinceMs` (walkie-talkie, a
+  // press into the notes recording, which Bud tells only once it's held past a click): a phrase whose
+  // speech began at most this long ago is the press's first words, kept; one begun before is the
+  // meeting's, for the notes.
+  hold(sinceMs = null) {
     if (this.held) return;
-    if (this.phrase && this.phrase.ms > HOLD_KEEP_MS) this.flush(); // the room's, from before the press
+    const p = this.phrase;
+    if (p && (sinceMs === null ? p.ms > HOLD_KEEP_MS : p.ms - p.pre > sinceMs)) this.flush(); // the room's, from before the press
     this.held = true;
     this.heldMs = 0;
+  }
+  // Walkie-talkie, the talk button let go of the notes recording it was pressed into: what was held
+  // ends as its phrase (or, `keep` false, a "not now", goes unheard), and the recording goes on as
+  // before (phrases at its pauses, for the notes).
+  release(keep = true) {
+    if (!this.held) return;
+    if (keep) this.flush();
+    else if (this.phrase) {
+      this.phrase = null;
+      this.onSpeech(false);
+    }
+    this.held = false;
   }
 
   frame(samples) {
@@ -167,7 +183,7 @@ export class BudEars {
         }
         return;
       }
-      this.phrase = { frames: this.pre, ms: this.preMs, speechMs: 0, quietMs: 0, tail: 0 };
+      this.phrase = { frames: this.pre, ms: this.preMs, pre: this.preMs, speechMs: 0, quietMs: 0, tail: 0 };
       this.pre = [];
       this.preMs = 0;
       this.onSpeech(true);
@@ -243,7 +259,7 @@ export class BudEars {
     const ms = (f) => (f.length / this.rate) * 1000;
     const speechMs = rest.reduce((n, f) => n + (this.loud(rms(f)) ? ms(f) : 0), 0);
     // `carried`: the end of something being said, kept even if it's short (the last syllable of a word)
-    this.phrase = { frames: rest, ms: rest.reduce((n, f) => n + ms(f), 0), speechMs, quietMs: 0, tail: rest.length, carried: speechMs > 0 };
+    this.phrase = { frames: rest, ms: rest.reduce((n, f) => n + ms(f), 0), pre: 0, speechMs, quietMs: 0, tail: rest.length, carried: speechMs > 0 };
     this.onSpeech(true);
   }
 

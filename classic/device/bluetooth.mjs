@@ -158,9 +158,9 @@ export async function connectBluetooth({ bluetooth, remembered = false, deviceId
         },
       } : {}),
       ...(listenSwitch ? {
-        async listen(on, holdToTalk = false, keepMuted = false) {
+        async listen(on, holdToTalk = false, keepMuted = false, talk = false) {
           if (closed || !device.gatt.connected) throw new Error('Bud disconnected.');
-          const value = new Uint8Array([(on ? 1 : 0) | (holdToTalk ? 2 : 0) | (keepMuted ? 4 : 0)]);
+          const value = new Uint8Array([(on ? 1 : 0) | (holdToTalk ? 2 : 0) | (keepMuted ? 4 : 0) | (talk ? 0x18 : 0)]);
           await inTurn(() => listenSwitch.writeValueWithResponse(value));
         },
       } : {}),

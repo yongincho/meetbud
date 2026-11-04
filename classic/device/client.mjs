@@ -150,11 +150,13 @@ export class DeviceClient {
   }
   // Bud's always-on ears (app.js): Bud opens its own recordings while this is on. holdToTalk is the
   // walkie-talkie mic mode (mobile mic-mode.ts): only the talk button opens Bud's mic, and a screen
-  // tap or Bud's own question opens none. keepMuted: the talk button no longer unmutes Bud.
+  // tap or Bud's own question opens none. keepMuted: the talk button no longer unmutes Bud. talk: the
+  // app knows the Talk and TalkEnd gestures (listen bits 3 and 4), so the talk button's Inputs say
+  // Talk, not Tap, and a press into notes ends with TalkEnd (firmware with it).
   get canListen() { return typeof this.#transport?.listen === 'function'; }
-  listen(on, holdToTalk = false, keepMuted = false) {
+  listen(on, holdToTalk = false, keepMuted = false, talk = false) {
     if (!this.canListen) throw new Error('This Bud cannot listen on its own.');
-    return this.#transport.listen(!!on, !!holdToTalk, !!keepMuted);
+    return this.#transport.listen(!!on, !!holdToTalk, !!keepMuted, !!talk);
   }
   snapshot() {
     const snapshot = { phase: this.#phase, connected: !!this.#transport, deviceId: this.#transport?.deviceId ?? null, session: this.#session,
@@ -1039,11 +1041,15 @@ export class DeviceClient {
     }
     return done.promise;
   }
-  async setMuted(muted) {
+  // keep: the request of a reply Bud is giving (its face, its speaker). Muting turns off Bud's mic
+  // only, so while that request is the open one it stays open, with an approval offered on it.
+  // Otherwise muting cancels the open request (a recording's) and its approval.
+  async setMuted(muted, keep = 0) {
     this.#requireCapability(Capability.CaptureControl);
     if (typeof muted !== 'boolean') throw new TypeError('Mute must be boolean.');
-    if (muted) this.#invalidateApproval(new Error('Device muted.'));
+    const kept = () => !!keep && this.#request === keep;
+    if (muted && !(kept() && this.#approval?.request === keep)) this.#invalidateApproval(new Error('Device muted.'));
     await this.#command(Type.Mute, 0, { muted });
-    if (muted && this.#request) await this.cancel(this.#request);
+    if (muted && this.#request && !kept()) await this.cancel(this.#request);
   }
 }

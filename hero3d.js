@@ -1,0 +1,255 @@
+/* The hero's phone in 3D (three.js): a phone with Bud on its back, lit by a soft studio room, with
+ * Bud's live face (lib's K.Screen, rendered by hand each frame) as the glowing screen under glass.
+ * On load the phone turns from its front to its back, then floats and leans toward the pointer;
+ * a tap on Bud plays the hero's little exchange (window.budHero.tap). Sizes are in millimeters.
+ * If WebGL or three.js isn't there, the page keeps its photo (the .phone-photo fallback). */
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const K = window.Bud;
+const host = document.getElementById('phone3d');
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// the phone, about an iPhone 15 (71.6 x 147.6 x 7.8 mm), and Bud below its camera
+const PHONE = { w: 71.6, h: 147.6, d: 7.8, r: 11.6, bevel: 1.6 };
+const BUD = { r: 27, d: 9.5, y: -6, screen: 0.905 };
+
+function roundedRect(w, h, r) {
+  const s = new THREE.Shape();
+  const x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y);
+  s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+// a rounded rectangle slab, centered, `d` deep along z
+function slab(w, h, r, d, bevel, mats) {
+  const g = new THREE.ExtrudeGeometry(roundedRect(w - bevel * 2, h - bevel * 2, Math.max(0.5, r - bevel)), {
+    depth: d - bevel * 2, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 10, curveSegments: 40,
+  });
+  g.translate(0, 0, -(d - bevel * 2) / 2);
+  return new THREE.Mesh(g, mats);
+}
+
+// A dark studio with softboxes, for the reflections: deep blacks on glass and lenses, bright strips on
+// metal (an evenly lit room turns every glossy surface gray).
+function studio() {
+  const s = new THREE.Scene();
+  s.add(new THREE.Mesh(new THREE.SphereGeometry(600, 48, 24), new THREE.MeshBasicMaterial({ color: 0x15171c, side: THREE.BackSide })));
+  const box = (w, h, x, y, z, k, tint = 0xffffff) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(tint).multiplyScalar(k), side: THREE.DoubleSide }));
+    m.position.set(x, y, z); m.lookAt(0, 0, 0); s.add(m);
+  };
+  box(520, 160, 40, 420, 160, 3.0);            // overhead softbox
+  box(140, 520, 430, 60, 220, 2.2);            // a strip on the right
+  box(140, 460, -440, 0, 160, 1.0, 0xdbe8ff);  // a cool fill on the left
+  box(560, 220, 0, -60, 480, 0.55, 0xfff1e0);  // warm bounce from the front
+  box(900, 300, 0, -480, 0, 0.35, 0xfff6ec);   // the floor's glow
+  return s;
+}
+
+function start() {
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, innerWidth < 700 ? 1.6 : 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.92;
+  host.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  // a bright room for the metal; glass and lenses take only a little of it (envMapIntensity)
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+  const key = new THREE.DirectionalLight(0xffffff, 1.6);
+  key.position.set(140, 180, 260);
+  const rim = new THREE.DirectionalLight(0xdfeaff, 0.9);
+  rim.position.set(-220, 60, -120);
+  // a warm light close to the top right corner: the back glass falls off softly across its length
+  const glow = new THREE.PointLight(0xfff4ea, 26000, 0, 2);
+  glow.position.set(70, 120, 90);
+  scene.add(key, rim, glow, new THREE.HemisphereLight(0xf4f7ff, 0xe9dccb, 0.45));
+
+  const camera = new THREE.PerspectiveCamera(20, 1, 10, 2000);
+  camera.position.set(0, 0, 520);
+
+  /* ------------------------------------------------------------- materials */
+  // frosted color glass with a thin glossy coat (soft highlights), and a satin anodized frame
+  const glassBack = new THREE.MeshPhysicalMaterial({ color: 0xaecbe6, roughness: 0.58, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.1, envMapIntensity: 0.9 });
+  const frameMat = new THREE.MeshPhysicalMaterial({ color: 0xc2d5e6, roughness: 0.34, metalness: 0.65, envMapIntensity: 1.0 });
+  const front = new THREE.MeshPhysicalMaterial({ color: 0x050608, roughness: 0.06, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 0.5 });
+  const bump = new THREE.MeshPhysicalMaterial({ color: 0xbad3e8, roughness: 0.08, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 0.9 });
+  const ringMetal = new THREE.MeshPhysicalMaterial({ color: 0xc9d6e2, roughness: 0.14, metalness: 1, envMapIntensity: 1.2 });
+  const lensGlass = new THREE.MeshPhysicalMaterial({ color: 0x05070b, roughness: 0.03, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 0.35 });
+  const budMetal = new THREE.MeshPhysicalMaterial({ color: 0xeef0f2, roughness: 0.24, metalness: 1, envMapIntensity: 1.1 });
+
+  /* ------------------------------------------------------------- the phone */
+  const phone = new THREE.Group();
+  const body = slab(PHONE.w, PHONE.h, PHONE.r, PHONE.d, PHONE.bevel, [glassBack, frameMat]);
+  body.rotation.y = Math.PI; // the extrude's +z cap is the back, facing the camera at rest
+  phone.add(body);
+  // the screen side: black glass just above the front cap
+  const scr = new THREE.Mesh(new THREE.ShapeGeometry(roundedRect(PHONE.w - 2.2, PHONE.h - 2.2, PHONE.r - 1.1), 40), front);
+  scr.position.z = -PHONE.d / 2 - 0.02; scr.rotation.y = Math.PI;
+  phone.add(scr);
+  // side buttons
+  for (const [x, y, h] of [[-1, 38, 6], [-1, 25, 12], [-1, 10, 12], [1, 22, 18]]) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1.4, h, 3.2), frameMat);
+    b.position.set(x * (PHONE.w / 2 + 0.3), y, 0);
+    phone.add(b);
+  }
+  // the camera: a raised square with two lenses, a flash and a mic
+  const back = PHONE.d / 2;
+  const cam = slab(28.5, 28.5, 7.2, 1.6, 0.5, [bump, bump]);
+  cam.position.set(-PHONE.w / 2 + 6 + 14.25, PHONE.h / 2 - 6 - 14.25, back + 0.6);
+  phone.add(cam);
+  for (const [dx, dy] of [[-6.4, 6.4], [6.4, -6.4]]) {
+    const ring = new THREE.Mesh(new THREE.CylinderGeometry(5.9, 5.9, 1.4, 64), ringMetal);
+    ring.rotation.x = Math.PI / 2; ring.position.set(cam.position.x + dx, cam.position.y + dy, back + 1.9);
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(4.6, 64), lensGlass);
+    lens.position.set(ring.position.x, ring.position.y, back + 2.62);
+    const inner = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.4, 48), new THREE.MeshPhysicalMaterial({ color: 0x1b2433, roughness: 0.1, metalness: 0.6 }));
+    inner.position.set(lens.position.x, lens.position.y, back + 2.64);
+    phone.add(ring, lens, inner);
+  }
+  const flash = new THREE.Mesh(new THREE.CircleGeometry(2.3, 40), new THREE.MeshPhysicalMaterial({ color: 0xf3efe2, roughness: 0.25, clearcoat: 1 }));
+  flash.position.set(cam.position.x + 6.6, cam.position.y + 6.4, back + 1.42);
+  const mic = new THREE.Mesh(new THREE.CircleGeometry(0.7, 24), lensGlass);
+  mic.position.set(cam.position.x - 6.4, cam.position.y - 0.2, back + 1.42);
+  phone.add(flash, mic);
+
+  /* ------------------------------------------------------------- Bud */
+  const bud = new THREE.Group();
+  const R = BUD.r, D = BUD.d;
+  // the profile: flat on the phone, a softly curved side, a rounded lip up to the glass
+  const prof = [];
+  prof.push(new THREE.Vector2(0.01, 0));
+  prof.push(new THREE.Vector2(R - 2.2, 0));
+  for (let i = 0; i <= 12; i++) { const a = -Math.PI / 2 + (i / 12) * (Math.PI / 2); prof.push(new THREE.Vector2(R - 2.2 + 2.2 * Math.cos(a), 2.2 + 2.2 * Math.sin(a))); }
+  prof.push(new THREE.Vector2(R, D - 2.4));
+  for (let i = 0; i <= 14; i++) { const a = (i / 14) * (Math.PI / 2); prof.push(new THREE.Vector2(R - 2.4 + 2.4 * Math.cos(a), D - 2.4 + 2.4 * Math.sin(a))); }
+  prof.push(new THREE.Vector2(R * BUD.screen + 0.3, D));
+  prof.push(new THREE.Vector2(R * BUD.screen, D - 0.25));
+  const shell = new THREE.Mesh(new THREE.LatheGeometry(prof, 128), budMetal);
+  shell.rotation.x = Math.PI / 2;
+  bud.add(shell);
+  // its side buttons, like the prototype's
+  for (const a of [-0.18, 0.18]) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(1.2, 5.4, 2.4), budMetal);
+    b.position.set(Math.cos(a) * (R + 0.35), Math.sin(a) * (R + 0.35), D * 0.55);
+    b.rotation.z = a;
+    bud.add(b);
+  }
+  // the screen: the live face glows under glossy glass
+  const faceHost = document.createElement('div');
+  faceHost.style.cssText = 'position:fixed;left:0;top:0;width:512px;height:512px;opacity:0;pointer-events:none;z-index:-1';
+  const faceEl = document.createElement('div');
+  faceEl.style.cssText = 'width:100%;height:100%';
+  faceHost.appendChild(faceEl);
+  document.body.appendChild(faceHost);
+  const face = new K.Screen(faceEl, { fps: 60, bloom: true, manual: true });
+  face.set({ character: 'eyes', base: 'eyes', pack: 'lantern', theme: 'classic', acc: {}, ambient: null, state: 'hello',
+    oled: true, glow: true, grid: false, drift: false, shape: { type: 'circle' }, stage: {}, variety: !REDUCED });
+  const tex = new THREE.CanvasTexture(face.canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  // the face is light, not lit: no tone mapping on it, and only a faint reflection over it
+  const screenMat = new THREE.MeshPhysicalMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 1,
+    roughness: 0.04, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 0.18 });
+  screenMat.toneMapped = false;
+  const screen = new THREE.Mesh(new THREE.CircleGeometry(R * BUD.screen, 96), screenMat);
+  screen.position.z = D - 0.24;
+  bud.add(screen);
+  bud.position.set(0, BUD.y, back);
+  phone.add(bud);
+  // where Bud sits on the glass: a soft contact shadow, a little toward the lower left
+  const cc = document.createElement('canvas'); cc.width = cc.height = 256;
+  const cg = cc.getContext('2d');
+  const cgr = cg.createRadialGradient(124, 132, 92, 126, 130, 120);
+  cgr.addColorStop(0, 'rgba(20,32,48,0.42)'); cgr.addColorStop(1, 'rgba(20,32,48,0)');
+  cg.fillStyle = cgr; cg.fillRect(0, 0, 256, 256);
+  const contact = new THREE.Mesh(new THREE.PlaneGeometry(R * 2.42, R * 2.42),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cc), transparent: true, depthWrite: false }));
+  contact.position.set(0, BUD.y, back + 0.06);
+  phone.add(contact);
+
+  // a soft shadow under it all, as a blurred disc (no ground plane to fight the page's sky)
+  const sc = document.createElement('canvas'); sc.width = sc.height = 256;
+  const sg = sc.getContext('2d');
+  const grad = sg.createRadialGradient(128, 128, 0, 128, 128, 128);
+  grad.addColorStop(0, 'rgba(40,52,70,0.38)'); grad.addColorStop(1, 'rgba(40,52,70,0)');
+  sg.fillStyle = grad; sg.fillRect(0, 0, 256, 256);
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false }));
+  shadow.scale.set(150, 26, 1);
+  shadow.position.set(-6, -PHONE.h / 2 - 22, -40);
+  scene.add(shadow);
+
+  const rig = new THREE.Group();
+  rig.add(phone);
+  scene.add(rig);
+
+  /* ------------------------------------------------------------- size, motion */
+  function resize() {
+    const w = host.clientWidth, h = host.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    // fit the phone's height with a little room
+    const fit = (PHONE.h * 1.22) / (2 * Math.tan((camera.fov * Math.PI) / 360));
+    camera.position.z = Math.max(fit, (PHONE.w * 1.75) / (2 * Math.tan((camera.fov * Math.PI) / 360) * camera.aspect));
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(host);
+  resize();
+
+  let px = 0, py = 0;
+  addEventListener('pointermove', (e) => { px = (e.clientX / innerWidth) * 2 - 1; py = (e.clientY / innerHeight) * 2 - 1; }, { passive: true });
+
+  // tap Bud: the hero's exchange (next.js owns the words)
+  const ray = new THREE.Raycaster();
+  renderer.domElement.addEventListener('click', (e) => {
+    const r = renderer.domElement.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+    if (ray.intersectObjects([screen, shell], false).length) window.budHero?.tap?.();
+  });
+  renderer.domElement.addEventListener('pointermove', (e) => {
+    const r = renderer.domElement.getBoundingClientRect();
+    ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+    renderer.domElement.style.cursor = ray.intersectObjects([screen, shell], false).length ? 'pointer' : '';
+  });
+
+  const t0 = performance.now();
+  const ease = (x) => 1 - Math.pow(1 - x, 4);
+  let visible = true;
+  new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; }).observe(host);
+  let gx = 0, gy = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!visible) return;
+    const t = (now - t0) / 1000;
+    // the turn from the front to the back, over the first 1.8 s
+    const turn = REDUCED ? 1 : ease(Math.min(1, Math.max(0, (t - 0.25) / 1.8)));
+    gx += (px - gx) * 0.05; gy += (py - gy) * 0.05;
+    const sway = REDUCED ? 0 : Math.sin(t * 0.55) * 0.07;
+    rig.rotation.y = (1 - turn) * Math.PI - 0.32 + sway + gx * 0.18;
+    rig.rotation.x = 0.08 + gy * 0.1 + (REDUCED ? 0 : Math.sin(t * 0.4) * 0.025);
+    rig.rotation.z = -0.07;
+    rig.position.y = REDUCED ? 0 : Math.sin(t * 0.8) * 2.2;
+    shadow.material.opacity = 0.8 + Math.sin(t * 0.8) * 0.12;
+    face.cfg.gaze = { x: gx * 0.9, y: gy * 0.6, amt: turn };
+    face.render(now / 1000);
+    tex.needsUpdate = true;
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(frame);
+  setTimeout(() => face.set({ state: 'idle' }), 3200);
+  window.budHero = Object.assign(window.budHero || {}, { screen: face });
+  host.classList.add('on');
+}
+
+try {
+  const gl = document.createElement('canvas').getContext('webgl2');
+  if (gl && host) start();
+} catch (e) {
+  console.warn('3D hero unavailable', e);
+}

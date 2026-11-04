@@ -66,7 +66,9 @@ export const State = Object.freeze({
 export const Gesture = Object.freeze({
   "Tap": 0,
   "Hold": 1,
-  "Flip": 2
+  "Flip": 2,
+  "Talk": 3,
+  "TalkEnd": 4
 });
 export const ResultCode = Object.freeze({
   "Ok": 0,
@@ -133,6 +135,7 @@ export const Capability = Object.freeze({
   "Outfits": 64,
   "DisplayReadback": 128,
   "CaptureLease": 256,
-  "Screen": 512
+  "Screen": 512,
+  "TalkButton": 1024
 });
-export const CapabilityMask = 1023;
+export const CapabilityMask = 2047;
