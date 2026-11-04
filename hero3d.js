@@ -51,7 +51,50 @@ function studio() {
   return s;
 }
 
-function start() {
+// The real phone: "iPhone 18 Pro Max – High Quality 3D Model" by Pro Animator on Sketchfab, CC BY 4.0
+// (credited in the page's footer), slimmed for the web (no ground plane or logo, 512 px textures,
+// meshopt geometry) and recolored here. Returns it scaled to millimeters, centered, its back toward
+// +z, with where Bud goes and a ray test for the back glass's height there.
+const IPHONE_H = 163.4; // a 17 or 18 Pro Max's height, mm
+async function loadPhone() {
+  const [{ GLTFLoader }, { MeshoptDecoder }] = await Promise.all([
+    import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js')]);
+  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(new URL('models/iphone.glb', import.meta.url).href);
+  const root = gltf.scene;
+  // its source scene stands the phone up on a floor, tilted a little; undo that
+  const body = root.getObjectByName('Object_7_0');
+  if (body) { body.position.set(0, 0, 0); body.quaternion.identity(); }
+  root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
+  const k = IPHONE_H / size.y;
+  root.position.sub(mid);
+  const group = new THREE.Group();
+  group.add(root);
+  group.scale.setScalar(k);
+  // a light silver-blue frame and a frosted back, for the page's sky (it comes in burgundy)
+  root.traverse((o) => {
+    if (!o.isMesh || !o.material || !o.material.color) return;
+    const m = o.material;
+    const set = (hex, metal, rough, env = 1) => { m.color.set(hex); m.metalness = metal; m.roughness = rough; m.envMapIntensity = env; m.needsUpdate = true; };
+    if (m.name === '17ProMax_color') set(0xc3d2e1, 0.72, 0.3, 1.05);
+    else if (m.name === '17ProMax_color2') set(0xb2c8de, 0.05, 0.52, 0.95);
+    else if (m.name === '17ProMax_color3') set(0x8d9cad, 0.6, 0.38);
+    else if (m.name === '17ProMax_Black2.001') set(0x1b1e24, 0.6, 0.45);
+    else if (m.name === '17ProMax_Black2') set(0x040507, 0.1, 0.1, 0.55);
+    else if (m.name === '17ProMax_glass') { set(0x080a0e, 0, 0.04, 0.9); m.transparent = true; m.opacity = 0.32; } // the lens covers: clear, so the lenses show
+  });
+  group.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster();
+  const backZ = (x, y) => {
+    ray.set(new THREE.Vector3(x, y, 300), new THREE.Vector3(0, 0, -1));
+    const hit = ray.intersectObject(group, true)[0];
+    return hit ? hit.point.z : (size.z * k) / 2;
+  };
+  return { group, w: size.x * k, h: size.y * k, budY: -0.06 * size.y * k, backZ };
+}
+
+async function start() {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, innerWidth < 700 ? 1.6 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -76,25 +119,29 @@ function start() {
   const lensGlass = new THREE.MeshPhysicalMaterial({ color: 0x05070b, roughness: 0.03, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 0.35 });
 
   /* ------------------------------------------------------------- the phone */
+  // The real phone is a 3D model (models/iphone.glb, loaded below); this drawn one stands in if it
+  // can't load.
   const phone = new THREE.Group();
+  const drawn = new THREE.Group();
+  phone.add(drawn);
   const body = slab(PHONE.w, PHONE.h, PHONE.r, PHONE.d, PHONE.bevel, [glassBack, frameMat]);
   body.rotation.y = Math.PI; // the extrude's +z cap is the back, facing the camera at rest
-  phone.add(body);
+  drawn.add(body);
   // the screen side: black glass just above the front cap
   const scr = new THREE.Mesh(new THREE.ShapeGeometry(roundedRect(PHONE.w - 2.2, PHONE.h - 2.2, PHONE.r - 1.1), 40), front);
   scr.position.z = -PHONE.d / 2 - 0.02; scr.rotation.y = Math.PI;
-  phone.add(scr);
+  drawn.add(scr);
   // side buttons
   for (const [x, y, h] of [[-1, 38, 6], [-1, 25, 12], [-1, 10, 12], [1, 22, 18]]) {
     const b = new THREE.Mesh(new THREE.BoxGeometry(1.4, h, 3.2), frameMat);
     b.position.set(x * (PHONE.w / 2 + 0.3), y, 0);
-    phone.add(b);
+    drawn.add(b);
   }
   // the camera: a raised square with two lenses and a flash
   const back = PHONE.d / 2;
   const cam = slab(28.5, 28.5, 7.2, 1.6, 0.5, [bump, bump]);
   cam.position.set(-PHONE.w / 2 + 6 + 14.25, PHONE.h / 2 - 6 - 14.25, back + 0.6);
-  phone.add(cam);
+  drawn.add(cam);
   for (const [dx, dy] of [[-6.4, 6.4], [6.4, -6.4]]) {
     const ring = new THREE.Mesh(new THREE.CylinderGeometry(5.9, 5.9, 1.4, 64), ringMetal);
     ring.rotation.x = Math.PI / 2; ring.position.set(cam.position.x + dx, cam.position.y + dy, back + 1.9);
@@ -102,11 +149,12 @@ function start() {
     lens.position.set(ring.position.x, ring.position.y, back + 2.62);
     const inner = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.4, 48), new THREE.MeshPhysicalMaterial({ color: 0x1b2433, roughness: 0.1, metalness: 0.6 }));
     inner.position.set(lens.position.x, lens.position.y, back + 2.64);
-    phone.add(ring, lens, inner);
+    drawn.add(ring, lens, inner);
   }
   const flash = new THREE.Mesh(new THREE.CircleGeometry(2.3, 40), new THREE.MeshPhysicalMaterial({ color: 0xf3efe2, roughness: 0.25, clearcoat: 1 }));
   flash.position.set(cam.position.x + 6.6, cam.position.y + 6.4, back + 1.42);
-  phone.add(flash);
+  drawn.add(flash);
+  const dims = { w: PHONE.w, h: PHONE.h }; // the phone shown (the model's, once it loads)
 
   /* ------------------------------------------------------------- Bud (bud3d.js) */
   const R = BUD.r;
@@ -157,14 +205,26 @@ function start() {
   rig.add(phone);
   scene.add(rig);
 
+  // the real phone, when it loads in time (the photo shows until then); Bud on its back glass
+  const model = await Promise.race([loadPhone(), new Promise((r) => setTimeout(() => r(null), 5000))]).catch((e) => { console.warn('phone model', e); return null; });
+  if (model) {
+    drawn.visible = false;
+    phone.add(model.group);
+    dims.w = model.w; dims.h = model.h;
+    const z = model.backZ(0, model.budY);
+    bud.position.set(0, model.budY, z);
+    contact.position.set(0, model.budY, z + 0.06);
+    shadow.position.y = -dims.h / 2 - 22;
+  }
+
   /* ------------------------------------------------------------- size, motion */
   function resize() {
     const w = host.clientWidth, h = host.clientHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // fit the phone's height with a little room
-    const fit = (PHONE.h * 1.22) / (2 * Math.tan((camera.fov * Math.PI) / 360));
-    camera.position.z = Math.max(fit, (PHONE.w * 1.75) / (2 * Math.tan((camera.fov * Math.PI) / 360) * camera.aspect));
+    const fit = (dims.h * 1.22) / (2 * Math.tan((camera.fov * Math.PI) / 360));
+    camera.position.z = Math.max(fit, (dims.w * 1.75) / (2 * Math.tan((camera.fov * Math.PI) / 360) * camera.aspect));
     camera.updateProjectionMatrix();
   }
   new ResizeObserver(resize).observe(host);
@@ -205,8 +265,8 @@ function start() {
     rig.position.y = REDUCED ? 0 : Math.sin(t * 0.8) * 2.2;
     shadow.material.opacity = 0.8 + Math.sin(t * 0.8) * 0.12;
     face.cfg.gaze = { x: gx * 0.9, y: gy * 0.6, amt: turn };
-    face.render(now / 1000);
-    tex.needsUpdate = true;
+    // (a face that fails to draw leaves the screen as it was; the phone still shows)
+    try { face.render(now / 1000); tex.needsUpdate = true; } catch (e) { /* the face library didn't load whole */ }
     renderer.render(scene, camera);
   }
   requestAnimationFrame(frame);
@@ -217,7 +277,7 @@ function start() {
 
 try {
   const gl = document.createElement('canvas').getContext('webgl2');
-  if (gl && host) start();
+  if (gl && host) start().catch((e) => console.warn('3D hero unavailable', e));
 } catch (e) {
   console.warn('3D hero unavailable', e);
 }
