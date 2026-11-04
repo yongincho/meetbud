@@ -59,9 +59,9 @@ p { margin: 0; }
 .nav-links a:not(.pill):hover { color: var(--ink); }
 
 /* ---------------------------------------------------------------- the Bud */
-/* img/bud-3d.webp is Bud rendered from the hero's 3D model (hero3d.js, ?snap=bud), face on; its
- * screen is a circle at (49.359%, 50.034%) with radius 40.329% (img/bud-3d.json), where the live face
- * goes. The shadow is a pseudo-element, so the live canvas isn't filtered every frame. */
+/* img/bud-3d.webp is Bud rendered face on from the hero's own model (bud3d.js, by tools/bud-3d.html);
+ * its screen is a circle at (49.893%, 50.009%) with radius 40.828% (img/bud-3d.json), where the live
+ * face goes. The shadow is a pseudo-element, so the live canvas isn't filtered every frame. */
 .bud {
   --d: 300px;
   position: relative; display: block; flex: none; width: var(--d); aspect-ratio: 1; padding: 0; border: 0;
@@ -73,7 +73,7 @@ p { margin: 0; }
     0 calc(var(--d) * 0.015) calc(var(--d) * 0.03) rgba(30, 28, 24, 0.18);
 }
 .bud-glass {
-  position: absolute; left: 9.03%; top: 9.705%; width: 80.658%; height: 80.658%;
+  position: absolute; left: 9.065%; top: 9.181%; width: 81.656%; height: 81.656%;
   border-radius: 50%; overflow: hidden; background: #000;
 }
 .bud-screen { position: absolute; inset: 1.6%; border-radius: 50%; overflow: hidden; }
@@ -89,8 +89,9 @@ button.bud:active { transform: scale(0.97); }
 
 /* ---------------------------------------------------------------- hero */
 .hero {
-  position: relative; margin: 10px; border-radius: var(--r-xl); overflow: hidden;
-  min-height: min(980px, calc(100svh - 20px)); padding: clamp(96px, 13vh, 140px) var(--pad) 0;
+  /* full width from the top edge (the nav floats on the sky), rounded only where it meets the page */
+  position: relative; margin: 0 0 10px; border-radius: 0 0 var(--r-xl) var(--r-xl); overflow: hidden;
+  min-height: min(990px, calc(100svh - 10px)); padding: clamp(96px, 13vh, 140px) var(--pad) 0;
   display: flex; flex-direction: column; align-items: center; text-align: center;
   background:
     radial-gradient(60% 45% at 50% 98%, rgba(255, 244, 226, 0.95), transparent 70%),
@@ -195,7 +196,7 @@ footer { position: relative; overflow: hidden; padding: 72px 0 0; }
 .peek {
   --pd: clamp(60px, 7.2vw, 112px);
   display: flex; justify-content: center; align-items: flex-start; gap: clamp(10px, 1.5vw, 20px);
-  margin-top: 44px; height: calc(var(--pd) * 0.72);
+  margin-top: 72px; height: calc(var(--pd) * 0.72);
 }
 .peeker { position: relative; flex: none; margin-top: calc(var(--pd) * 0.66 * (1.08 - var(--s))); cursor: pointer;
   transform: translateY(120%); transition: transform 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i) * 45ms); }
@@ -207,8 +208,11 @@ footer { position: relative; overflow: hidden; padding: 72px 0 0; }
 }
 .peeker:nth-child(odd) .bud { animation-direction: alternate-reverse; }
 @keyframes peekbob { from { transform: translateY(3%) rotate(-4deg); } to { transform: translateY(-5%) rotate(4deg); } }
-.peeker:hover .bud, .peeker.hi .bud { translate: 0 -24%; }
-.peeker:hover + .peeker .bud, .peeker:has(+ .peeker:hover) .bud { translate: 0 -7%; }
+.peeker:hover .bud { translate: 0 -42%; }
+.peeker:hover + .peeker .bud, .peeker:has(+ .peeker:hover) .bud { translate: 0 -10%; }
+/* one says hi: up about half its height, a little past and back, a moment there, then down */
+.peeker.hi { animation: peekhi 2s cubic-bezier(0.3, 0.9, 0.4, 1); }
+@keyframes peekhi { 0% { translate: 0 0; } 20% { translate: 0 -56%; } 30% { translate: 0 -48%; } 78% { translate: 0 -48%; } 100% { translate: 0 0; } }
 .peeker.hop { animation: peekhop 0.62s cubic-bezier(0.3, 0.9, 0.4, 1); }
 @keyframes peekhop { 40% { translate: 0 -46%; } 70% { translate: 0 -10%; } }
 @media (prefers-reduced-motion: reduce) { .peeker .bud { animation: none; } .peeker { transition: none; } }
@@ -224,7 +228,7 @@ footer { position: relative; overflow: hidden; padding: 72px 0 0; }
 
 /* ---------------------------------------------------------------- phones */
 @media (max-width: 860px) {
-  .peek { --pd: 64px; height: calc(var(--pd) * 0.82); margin-top: 32px; }
+  .peek { --pd: 64px; height: calc(var(--pd) * 0.82); margin-top: 52px; }
   .nav-links a:not(.pill) { display: none; }
   .hero { min-height: auto; padding-top: 92px; }
   .hero h1 { max-width: 10ch; }

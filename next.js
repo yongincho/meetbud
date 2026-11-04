@@ -145,8 +145,8 @@
       const b = mount(w.firstChild, cfg, { fps: 24, follow: true });
       const feel = (st, ms) => { b.scr.set({ state: st }); clearTimeout(b.t); b.t = setTimeout(() => b.scr.set({ state: 'idle' }), ms); };
       w.addEventListener('pointerenter', () => feel('love', 1500));
-      w.addEventListener('click', () => { w.classList.remove('hop'); void w.offsetWidth; w.classList.add('hop'); feel('love', 1800); track('footer_bud', { look: name }); });
-      w.addEventListener('animationend', (e) => { if (e.animationName === 'peekhop') w.classList.remove('hop'); });
+      w.addEventListener('click', () => { w.classList.remove('hop', 'hi'); void w.offsetWidth; w.classList.add('hop'); feel('love', 1800); track('footer_bud', { look: name }); });
+      w.addEventListener('animationend', (e) => { if (e.animationName === 'peekhop') w.classList.remove('hop'); if (e.animationName === 'peekhi') w.classList.remove('hi'); });
       return { w, feel };
     });
     // they pop up when the footer shows, and while it does, one on screen pops up to say hi now and then
@@ -157,11 +157,10 @@
       clearInterval(hi);
       if (!on || REDUCED) return;
       hi = setInterval(() => {
-        const seen = crowd.filter((c) => { const r = c.w.getBoundingClientRect(); return r.left > 0 && r.right < innerWidth && !c.w.matches(':hover'); });
+        const seen = crowd.filter((c) => { const r = c.w.getBoundingClientRect(); return r.left > 0 && r.right < innerWidth && !c.w.matches(':hover') && !c.w.classList.contains('hi') && !c.w.classList.contains('hop'); });
         const c = seen[Math.floor(Math.random() * seen.length)];
         if (!c) return;
-        c.w.classList.add('hi'); c.feel(Math.random() < 0.5 ? 'hello' : 'love', 1600);
-        setTimeout(() => c.w.classList.remove('hi'), 1500);
+        c.w.classList.add('hi'); c.feel(Math.random() < 0.5 ? 'hello' : 'love', 1800);
       }, 2200);
     }, { threshold: 0.15 }).observe(peek);
   }

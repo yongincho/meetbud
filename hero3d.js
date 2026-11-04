@@ -5,14 +5,15 @@
  * If WebGL or three.js isn't there, the page keeps its photo (the .phone-photo fallback). */
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { BUD, buildBud, light } from './bud3d.js?v=1';
 
 const K = window.Bud;
 const host = document.getElementById('phone3d');
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// the phone, about an iPhone 15 (71.6 x 147.6 x 7.8 mm), and Bud below its camera
+// the phone, about an iPhone 15 (71.6 x 147.6 x 7.8 mm), and Bud below its camera (bud3d.js)
 const PHONE = { w: 71.6, h: 147.6, d: 7.8, r: 11.6, bevel: 1.6 };
-const BUD = { r: 27, d: 9.5, y: -6, screen: 0.905 };
+const BUD_Y = -6;
 
 function roundedRect(w, h, r) {
   const s = new THREE.Shape();
@@ -59,17 +60,8 @@ function start() {
   host.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  const pmrem = new THREE.PMREMGenerator(renderer);
   // a bright room for the metal; glass and lenses take only a little of it (envMapIntensity)
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
-  const key = new THREE.DirectionalLight(0xffffff, 1.6);
-  key.position.set(140, 180, 260);
-  const rim = new THREE.DirectionalLight(0xdfeaff, 0.9);
-  rim.position.set(-220, 60, -120);
-  // a warm light close to the top right corner: the back glass falls off softly across its length
-  const glow = new THREE.PointLight(0xfff4ea, 26000, 0, 2);
-  glow.position.set(70, 120, 90);
-  scene.add(key, rim, glow, new THREE.HemisphereLight(0xf4f7ff, 0xe9dccb, 0.45));
+  light(THREE, renderer, scene, RoomEnvironment);
 
   const camera = new THREE.PerspectiveCamera(20, 1, 10, 2000);
   camera.position.set(0, 0, 520);
@@ -82,7 +74,6 @@ function start() {
   const bump = new THREE.MeshPhysicalMaterial({ color: 0xbad3e8, roughness: 0.08, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 0.9 });
   const ringMetal = new THREE.MeshPhysicalMaterial({ color: 0xc9d6e2, roughness: 0.14, metalness: 1, envMapIntensity: 1.2 });
   const lensGlass = new THREE.MeshPhysicalMaterial({ color: 0x05070b, roughness: 0.03, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 0.35 });
-  const budMetal = new THREE.MeshPhysicalMaterial({ color: 0xeef0f2, roughness: 0.24, metalness: 1, envMapIntensity: 1.1 });
 
   /* ------------------------------------------------------------- the phone */
   const phone = new THREE.Group();
@@ -99,7 +90,7 @@ function start() {
     b.position.set(x * (PHONE.w / 2 + 0.3), y, 0);
     phone.add(b);
   }
-  // the camera: a raised square with two lenses, a flash and a mic
+  // the camera: a raised square with two lenses and a flash
   const back = PHONE.d / 2;
   const cam = slab(28.5, 28.5, 7.2, 1.6, 0.5, [bump, bump]);
   cam.position.set(-PHONE.w / 2 + 6 + 14.25, PHONE.h / 2 - 6 - 14.25, back + 0.6);
@@ -115,37 +106,16 @@ function start() {
   }
   const flash = new THREE.Mesh(new THREE.CircleGeometry(2.3, 40), new THREE.MeshPhysicalMaterial({ color: 0xf3efe2, roughness: 0.25, clearcoat: 1 }));
   flash.position.set(cam.position.x + 6.6, cam.position.y + 6.4, back + 1.42);
-  const mic = new THREE.Mesh(new THREE.CircleGeometry(0.7, 24), lensGlass);
-  mic.position.set(cam.position.x - 6.4, cam.position.y - 0.2, back + 1.42);
-  phone.add(flash, mic);
+  phone.add(flash);
 
-  /* ------------------------------------------------------------- Bud */
-  const bud = new THREE.Group();
-  const R = BUD.r, D = BUD.d;
-  // the profile: flat on the phone, a softly curved side, a rounded lip up to the glass
-  const prof = [];
-  prof.push(new THREE.Vector2(0.01, 0));
-  prof.push(new THREE.Vector2(R - 2.2, 0));
-  for (let i = 0; i <= 12; i++) { const a = -Math.PI / 2 + (i / 12) * (Math.PI / 2); prof.push(new THREE.Vector2(R - 2.2 + 2.2 * Math.cos(a), 2.2 + 2.2 * Math.sin(a))); }
-  prof.push(new THREE.Vector2(R, D - 2.4));
-  for (let i = 0; i <= 14; i++) { const a = (i / 14) * (Math.PI / 2); prof.push(new THREE.Vector2(R - 2.4 + 2.4 * Math.cos(a), D - 2.4 + 2.4 * Math.sin(a))); }
-  prof.push(new THREE.Vector2(R * BUD.screen + 0.3, D));
-  prof.push(new THREE.Vector2(R * BUD.screen, D - 0.25));
-  const shell = new THREE.Mesh(new THREE.LatheGeometry(prof, 128), budMetal);
-  shell.rotation.x = Math.PI / 2;
-  bud.add(shell);
-  // its side buttons, like the prototype's
-  for (const a of [-0.18, 0.18]) {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(1.2, 5.4, 2.4), budMetal);
-    b.position.set(Math.cos(a) * (R + 0.35), Math.sin(a) * (R + 0.35), D * 0.55);
-    b.rotation.z = a;
-    bud.add(b);
-  }
+  /* ------------------------------------------------------------- Bud (bud3d.js) */
+  const R = BUD.r;
   // the screen: the live face glows under glossy glass
   const faceHost = document.createElement('div');
-  faceHost.style.cssText = 'position:fixed;left:0;top:0;width:512px;height:512px;opacity:0;pointer-events:none;z-index:-1';
+  // (a 512 px face drawn out of sight: inside a box of no size, so it never widens the page)
+  faceHost.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:-1';
   const faceEl = document.createElement('div');
-  faceEl.style.cssText = 'width:100%;height:100%';
+  faceEl.style.cssText = 'width:512px;height:512px';
   faceHost.appendChild(faceEl);
   document.body.appendChild(faceHost);
   const face = new K.Screen(faceEl, { fps: 60, bloom: true, manual: true });
@@ -158,10 +128,8 @@ function start() {
   const screenMat = new THREE.MeshPhysicalMaterial({ color: 0x000000, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 1,
     roughness: 0.04, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 0.18 });
   screenMat.toneMapped = false;
-  const screen = new THREE.Mesh(new THREE.CircleGeometry(R * BUD.screen, 96), screenMat);
-  screen.position.z = D - 0.24;
-  bud.add(screen);
-  bud.position.set(0, BUD.y, back);
+  const { group: bud, shell, screen } = buildBud(THREE, screenMat);
+  bud.position.set(0, BUD_Y, back);
   phone.add(bud);
   // where Bud sits on the glass: a soft contact shadow, a little toward the lower left
   const cc = document.createElement('canvas'); cc.width = cc.height = 256;
@@ -171,7 +139,7 @@ function start() {
   cg.fillStyle = cgr; cg.fillRect(0, 0, 256, 256);
   const contact = new THREE.Mesh(new THREE.PlaneGeometry(R * 2.42, R * 2.42),
     new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cc), transparent: true, depthWrite: false }));
-  contact.position.set(0, BUD.y, back + 0.06);
+  contact.position.set(0, BUD_Y, back + 0.06);
   phone.add(contact);
 
   // a soft shadow under it all, as a blurred disc (no ground plane to fight the page's sky)
