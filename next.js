@@ -123,8 +123,40 @@
   addEventListener('resize', onScroll);
   onScroll();
 
-  /* ------------------------------------------------ the footer */
-  $$('.peek .bud').forEach((el) => mount(el, look(el.dataset.look), { fps: 24, follow: true }));
+  /* ------------------------------------------------ the footer: a crowd of Buds peeking up */
+  const PEEK = ['dj', 'party', '', 'shades', 'kitty', 'blossom', 'study', '', 'winter', 'king', 'halloween', 'rainy', 'lantern', 'moonrabbit', 'party', 'shades'];
+  const SIZES = [0.9, 1, 0.86, 1.06, 0.92, 1, 0.88, 1.08, 0.94, 1, 0.9, 1.04, 0.88, 1, 0.92, 0.86];
+  const peek = $('#peek');
+  if (peek) {
+    const crowd = PEEK.map((id, i) => {
+      const w = document.createElement('div');
+      w.className = 'peeker';
+      w.style.setProperty('--s', SIZES[i]); w.style.setProperty('--i', i);
+      w.innerHTML = '<div class="bud"><span class="bud-glass"><span class="bud-screen"></span></span></div>';
+      peek.appendChild(w);
+      const b = mount(w.firstChild, look(id), { fps: 24, follow: true });
+      const feel = (st, ms) => { b.scr.set({ state: st }); clearTimeout(b.t); b.t = setTimeout(() => b.scr.set({ state: 'idle' }), ms); };
+      w.addEventListener('pointerenter', () => feel('love', 1500));
+      w.addEventListener('click', () => { w.classList.remove('hop'); void w.offsetWidth; w.classList.add('hop'); feel('love', 1800); track('footer_bud', { look: id || 'classic' }); });
+      w.addEventListener('animationend', (e) => { if (e.animationName === 'peekhop') w.classList.remove('hop'); });
+      return { w, feel };
+    });
+    // they pop up when the footer shows, and while it does, one on screen pops up to say hi now and then
+    let hi = 0;
+    new IntersectionObserver((es) => {
+      const on = es[es.length - 1].isIntersecting;
+      peek.classList.toggle('up', on);
+      clearInterval(hi);
+      if (!on || REDUCED) return;
+      hi = setInterval(() => {
+        const seen = crowd.filter((c) => { const r = c.w.getBoundingClientRect(); return r.left > 0 && r.right < innerWidth && !c.w.matches(':hover'); });
+        const c = seen[Math.floor(Math.random() * seen.length)];
+        if (!c) return;
+        c.w.classList.add('hi'); c.feel(Math.random() < 0.5 ? 'hello' : 'love', 1600);
+        setTimeout(() => c.w.classList.remove('hi'), 1500);
+      }, 2200);
+    }, { threshold: 0.15 }).observe(peek);
+  }
 
   /* ------------------------------------------------------------- the waitlist */
   // Bud's server keeps the list (connect/waitlist.mjs): { email, interest, variant, utm, ts }. The

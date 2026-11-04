@@ -188,9 +188,30 @@ section { scroll-margin-top: 72px; }
 footer { position: relative; overflow: hidden; padding: 72px 0 0; }
 .foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--ink-3); }
 .foot a { text-decoration: none; color: var(--ink-2); }
-.peek { display: flex; justify-content: center; gap: clamp(8px, 2vw, 24px); margin-top: 56px; height: clamp(70px, 9vw, 110px); }
-.peek .bud { --d: clamp(150px, 18vw, 240px); transform: translateY(4%); transition: transform 0.6s var(--ease); }
-.peek .bud:hover { transform: translateY(-8%); }
+/* a crowd of small Buds peeking up from the bottom edge (next.js): each a little different in size,
+ * tilting and bobbing on its own beat; they pop up in turn when the footer shows, the one under the
+ * pointer jumps up, and now and then one pops up to say hi. (align-items keeps them round: a
+ * stretched flex item would take the row's height and squash the circle.) */
+.peek {
+  --pd: clamp(60px, 7.2vw, 112px);
+  display: flex; justify-content: center; align-items: flex-start; gap: clamp(4px, 1vw, 14px);
+  margin-top: 44px; height: calc(var(--pd) * 0.72);
+}
+.peeker { position: relative; flex: none; margin-top: calc(var(--pd) * 0.66 * (1.08 - var(--s))); cursor: pointer;
+  transform: translateY(120%); transition: transform 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i) * 45ms); }
+.peek.up .peeker { transform: none; }
+.peeker .bud {
+  --d: calc(var(--pd) * var(--s)); pointer-events: none;
+  animation: peekbob calc(2.6s + var(--i) * 0.13s) ease-in-out calc(var(--i) * -0.41s) infinite alternate;
+  transition: translate 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.peeker:nth-child(odd) .bud { animation-direction: alternate-reverse; }
+@keyframes peekbob { from { transform: translateY(3%) rotate(-5deg); } to { transform: translateY(-5%) rotate(5deg); } }
+.peeker:hover .bud, .peeker.hi .bud { translate: 0 -24%; }
+.peeker:hover + .peeker .bud, .peeker:has(+ .peeker:hover) .bud { translate: 0 -7%; }
+.peeker.hop { animation: peekhop 0.62s cubic-bezier(0.3, 0.9, 0.4, 1); }
+@keyframes peekhop { 40% { translate: 0 -46%; } 70% { translate: 0 -10%; } }
+@media (prefers-reduced-motion: reduce) { .peeker .bud { animation: none; } .peeker { transition: none; } }
 
 /* the waitlist button that stays on a phone's screen */
 .sticky-cta {
@@ -203,6 +224,7 @@ footer { position: relative; overflow: hidden; padding: 72px 0 0; }
 
 /* ---------------------------------------------------------------- phones */
 @media (max-width: 860px) {
+  .peek { --pd: 64px; height: calc(var(--pd) * 0.82); margin-top: 32px; }
   .nav-links a:not(.pill) { display: none; }
   .hero { min-height: auto; padding-top: 92px; }
   .hero h1 { max-width: 10ch; }
