@@ -205,16 +205,16 @@
     async muse(my) {
       show('bud'); resetChat();
       await sleep(my, 400);
-      await speak(my, 'Find us something fun to do for Halloween this weekend');
-      budSays('Ooh, fun! Asking Muse.');
+      await speak(my, 'Plan me four days in Paris next month. Flights, a hotel, all of it.');
+      budSays('Ooh, Paris! Asking Muse.');
       await sleep(my, 600);
       mood('working', 'Muse is browsing…');
-      const b = card('Muse', '#4f6bed', 'M', `<div class="browser"><div class="url">${ico('magnifyingglass')}<span>Halloween events near you</span></div>
+      const b = card('Muse', '#4f6bed', 'M', `<div class="browser"><div class="url">${ico('magnifyingglass')}<span>Flights to Paris</span></div>
         <div class="page"><i class="pg-hero"></i><i class="l" style="width:78%"></i><i class="l" style="width:54%"></i><div class="ths"><i></i><i></i><i></i></div></div></div>`,
       LIVE('Browsing · <span class="clock">0:00</span>'));
       const url = $('.url span', b), page = $('.page', b);
-      const PAGES = [['Halloween events near you', '#ffe6cc', '🔎'], ['Haunted Happenings in Salem', '#efdcff', '🎃'], ['Frog Pond skating hours', '#dcebff', '⛸️'],
-        ['Saturday’s weather', '#fff0bf', '☀️'], ['What people are saying', '#dff5e8', '⭐']];
+      const PAGES = [['Flights to Paris', '#dcebff', '✈️'], ['Hotels in the Marais', '#efdcff', '🏨'], ['Louvre timed tickets', '#ffe6cc', '🖼️'],
+        ['Paris weather next month', '#fff0bf', '🌤️'], ['Best croissants near your hotel', '#dff5e8', '🥐']];
       const hero = $('.pg-hero', b);
       for (let s = 0; s < PAGES.length; s++) {
         url.textContent = PAGES[s][0]; hero.style.background = PAGES[s][1]; hero.textContent = PAGES[s][2];
@@ -223,23 +223,23 @@
         await sleep(my, 760);
       }
       state(b, 'Done · 0:05', 'done');
-      const p = card('Muse', '#4f6bed', 'M', `<h4>Two picks for Saturday</h4><div class="picks">
-        <div class="pick"><div class="th" style="background:linear-gradient(140deg,#ffb066,#8a3fd6)">🎃</div><b>Haunted Happenings</b><span>Salem · all day</span></div>
-        <div class="pick"><div class="th" style="background:linear-gradient(140deg,#a8dcff,#3b62d6)">⛸️</div><b>Frog Pond skating</b><span>Boston Common · at night</span></div></div>
-        <div class="acts"><button>Save both</button><button class="go">Send to Mina</button></div>`, 'Found two');
-      budFace().set(Object.assign({ state: 'love' }, lookCfg('halloween')));
+      const p = card('Muse', '#4f6bed', 'M', `<h4>Your four days in Paris</h4><div class="trip">
+        <div class="tr"><span class="te">✈️</span><div><b>Thursday evening, nonstop</b><span>Back Monday afternoon</span></div></div>
+        <div class="tr"><span class="te">🏨</span><div><b>A small hotel in the Marais</b><span>Walk to almost everything</span></div></div>
+        <div class="tr"><span class="te">🖼️</span><div><b>Fri · The Louvre, then the Tuileries</b><span>Timed tickets, so no line</span></div></div>
+        <div class="tr"><span class="te">🎨</span><div><b>Sat · Montmartre and a cooking class</b><span>Crêpes, of course</span></div></div>
+        <div class="tr"><span class="te">⛵</span><div><b>Sun · Musée d’Orsay, a Seine cruise at sunset</b><span>Your last night</span></div></div></div>
+        <div class="acts"><button>Change dates</button><button class="go">Add to calendar</button></div>`, 'Planned');
       status.textContent = IDLE;
-      add('Bud dressed up for Halloween', 'note');
+      await choose(my, $('.go', p), 2600);
+      $('.acts', p).outerHTML = `<div class="ok">${ico('checkmark')}On your calendar · saved to Notes</div>`;
+      await sleep(my, 700);
+      budFace().set({ character: 'eyes', theme: 'sakura', acc: { head: 'beret', item: 'croissant' }, ambient: 'sparkles', state: 'love' });
+      add('Bud packed its beret for Paris', 'note');
       cheer();
-      await choose(my, $('.go', p), 2400);
-      $('.acts', p).outerHTML = `<div class="ok">${ico('checkmark')}Sent to Mina’s Bud</div>`;
-      await sleep(my, 900);
-      fromFriend('kitty', 'Mina’s Bud', 'Mina’s in! She’s bringing her witch hat 🧙‍♀️');
-      cheer('hello', 1400);
-      await sleep(my, 1300);
-      budSays('Salem by day, skating at night. It’s a plan!');
-      budFace().set({ state: 'love' });
-      await sleep(my, 1800);
+      await sleep(my, 1100);
+      budSays('Paris next month! It’s all on your calendar, and I’m bringing my beret.');
+      await sleep(my, 2000);
       budFace().set({ state: 'idle' });
     },
     async dots(my) {
