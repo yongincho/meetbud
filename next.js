@@ -124,20 +124,28 @@
   onScroll();
 
   /* ------------------------------------------------ the footer: a crowd of Buds peeking up */
-  const PEEK = ['dj', 'party', '', 'shades', 'kitty', 'blossom', 'study', '', 'winter', 'king', 'halloween', 'rainy', 'lantern', 'moonrabbit', 'party', 'shades'];
-  const SIZES = [0.9, 1, 0.86, 1.06, 0.92, 1, 0.88, 1.08, 0.94, 1, 0.9, 1.04, 0.88, 1, 0.92, 0.86];
+  // every one different: the looks (Seollal and Moon rabbit for Chuseok too), Classic, Santa (the
+  // Christmas outfit) and three mixed from pieces; the middle ones show on every screen
+  const mix = (name, theme, acc, ambient) => ({ name, cfg: { character: 'eyes', theme, acc, ambient: ambient || null } });
+  const PEEK = [
+    'rainy', 'lantern', mix('pirate', 'night', { head: 'pirateHat', item: 'spyglass' }), 'dj', 'kitty', 'seollal', 'party',
+    mix('christmas', 'classic', { head: 'santaHat', face: 'santaBeard', item: 'present' }, 'snow'), '', 'shades',
+    mix('paris', 'sakura', { head: 'beret', face: 'roundGlasses', item: 'croissant' }), 'study', 'king', 'blossom', 'halloween',
+    mix('summer', 'mint', { head: 'strawHat', face: 'sunglasses', item: 'surfboard' }), 'moonrabbit', 'winter',
+  ].map((p) => (typeof p === 'string' ? { name: p || 'classic', cfg: look(p) } : p));
+  const SIZES = [0.9, 0.98, 0.88, 1.04, 0.92, 1, 0.9, 1.06, 0.94, 1.02, 0.88, 1.04, 0.9, 1, 0.94, 1.06, 0.9, 0.96];
   const peek = $('#peek');
   if (peek) {
-    const crowd = PEEK.map((id, i) => {
+    const crowd = PEEK.map(({ name, cfg }, i) => {
       const w = document.createElement('div');
       w.className = 'peeker';
       w.style.setProperty('--s', SIZES[i]); w.style.setProperty('--i', i);
       w.innerHTML = '<div class="bud"><span class="bud-glass"><span class="bud-screen"></span></span></div>';
       peek.appendChild(w);
-      const b = mount(w.firstChild, look(id), { fps: 24, follow: true });
+      const b = mount(w.firstChild, cfg, { fps: 24, follow: true });
       const feel = (st, ms) => { b.scr.set({ state: st }); clearTimeout(b.t); b.t = setTimeout(() => b.scr.set({ state: 'idle' }), ms); };
       w.addEventListener('pointerenter', () => feel('love', 1500));
-      w.addEventListener('click', () => { w.classList.remove('hop'); void w.offsetWidth; w.classList.add('hop'); feel('love', 1800); track('footer_bud', { look: id || 'classic' }); });
+      w.addEventListener('click', () => { w.classList.remove('hop'); void w.offsetWidth; w.classList.add('hop'); feel('love', 1800); track('footer_bud', { look: name }); });
       w.addEventListener('animationend', (e) => { if (e.animationName === 'peekhop') w.classList.remove('hop'); });
       return { w, feel };
     });
