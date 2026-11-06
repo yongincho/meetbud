@@ -218,16 +218,30 @@ async function start() {
   }
 
   /* ------------------------------------------------------------- size, motion */
+  // The stage's CSS sets the framing: --fill is the share of the stage's height the phone takes
+  // (0.82 leaves a little room), and --top, when set, puts the phone's top that share of the height
+  // below the stage's top instead of centering it (the hero crops the rest). With --top, a short
+  // window gets a smaller phone, so Bud's whole face still ends above the fold.
   function resize() {
     const w = host.clientWidth, h = host.clientHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    // fit the phone's height with a little room
-    const fit = (dims.h * 1.22) / (2 * Math.tan((camera.fov * Math.PI) / 360));
-    camera.position.z = Math.max(fit, (dims.w * 1.75) / (2 * Math.tan((camera.fov * Math.PI) / 360) * camera.aspect));
+    const css = getComputedStyle(host);
+    let fill = parseFloat(css.getPropertyValue('--fill')) || 0.82;
+    const top = parseFloat(css.getPropertyValue('--top'));
+    if (Number.isFinite(top)) {
+      const room = innerHeight - 24 - (host.getBoundingClientRect().top + scrollY); // fold, 24 px up
+      const ring = (dims.h / 2 - bud.position.y + BUD.r) / dims.h; // Bud's lowest edge, per phone height
+      fill = Math.max(0.82, Math.min(fill, (room - top * h) / (ring * h)));
+    }
+    const tan = Math.tan((camera.fov * Math.PI) / 360);
+    camera.position.z = Math.max(dims.h / fill / (2 * tan), (dims.w * 1.75) / (2 * tan * camera.aspect));
+    const half = camera.position.z * tan; // half the view's height where the phone is
+    camera.position.y = Number.isFinite(top) ? dims.h / 2 - half + 2 * top * half : 0;
     camera.updateProjectionMatrix();
   }
   new ResizeObserver(resize).observe(host);
+  addEventListener('resize', resize, { passive: true }); // the stage's top moves with the headline
   resize();
 
   let px = 0, py = 0;

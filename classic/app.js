@@ -2046,7 +2046,7 @@
   function sample() {
     if (!S.speak) return;
     Sfx.unlock();
-    Voice.say('Hey, I’m Bud. Tap me anytime and I’ll take care of it.', voiceOpts());
+    Voice.say(A.HELLO, voiceOpts());
   }
   paintVoice();
   if ('speechSynthesis' in window) speechSynthesis.addEventListener('voiceschanged', paintVoice);

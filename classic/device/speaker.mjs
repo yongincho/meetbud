@@ -155,6 +155,7 @@ class Talk {
     this.batch = []; // packets waiting to go together (in the background)
     this.waiting = 0; // packets queued behind the one being made
     this.failure = null; // detached lead/fill/background writes must still fail the utterance
+    this.silent = new WeakSet(); // packets of silence waiting in a batch (not words)
   }
   bulk() {
     return !!this.speaker.writeMany && this.speaker.background();
@@ -171,10 +172,16 @@ class Talk {
   ahead() {
     return this.sentMs - (this.playAt ? Math.max(0, now() - this.playAt) : 0);
   }
+  // How much of what was said (words or a clip, not the silence around them) the board still has to
+  // play, in ms: a sentence all sent is still heard for this long. 0 once stopped.
+  speechAhead() {
+    if (!this.spoken || !this.live()) return 0;
+    return Math.max(0, this.spoken - (this.playAt ? Math.max(0, now() - this.playAt) : 0));
+  }
 
   begin() {
     if (this.open) return;
-    Object.assign(this, { open: true, sequence: 0, state: { predictor: 0, stepIndex: 0 }, sentMs: 0, playAt: 0, lastAt: 0, filled: 0, gain: GAIN_START, started: false,
+    Object.assign(this, { open: true, sequence: 0, state: { predictor: 0, stepIndex: 0 }, sentMs: 0, spoken: 0, playAt: 0, lastAt: 0, filled: 0, gain: GAIN_START, started: false,
       lowCut: { x1: 0, x2: 0, y1: 0, y2: 0 } });
     // how this utterance went, for Bud's server log (stats())
     this.seen = { at: now(), packets: 0, late: 0, write: 0, wait: 0, behind: 0, dry: 0, ms: 0, batches: 0, reading: 0 };
@@ -197,6 +204,7 @@ class Talk {
     }
     this.playAt = 0;
     this.sentMs = 0;
+    this.spoken = 0;
     return true;
   }
 
@@ -213,7 +221,7 @@ class Talk {
       const before = { ...this.state };
       const { bytes, state } = encodeSamples(AudioCodec.ImaAdpcm, some, this.state);
       this.state = state;
-      return { before, bytes, count: some.length };
+      return { before, bytes, count: some.length, quiet: samples === SILENCE };
     });
   }
   // One block already in ADPCM with its own starting state (a friend's voice clip), paced the same.
@@ -234,13 +242,14 @@ class Talk {
       if (!this.live()) return false;
       const late = now() - due;
       if (late > this.seen.late) this.seen.late = late;
-      const { before, bytes, count } = make(false);
+      const { before, bytes, count, quiet } = make(false);
       const writing = now();
       await this.speaker.write(packet(Kind.Audio, this.sequence++, before, bytes, count));
       this.lastAt = now();
       if (this.lastAt - writing > this.seen.write) this.seen.write = this.lastAt - writing;
       this.seen.packets++;
       this.sentMs += (count / PACKET) * PACKET_MS;
+      if (!quiet) this.spoken = this.sentMs; // (where the last words end)
       if (!this.playAt && this.sentMs >= START_MS) this.playAt = this.lastAt + LINK_MS;
       return true;
     };
@@ -259,8 +268,9 @@ class Talk {
   // In the background: the packet waits in the batch, which goes when it is full, or sooner when
   // the board is about to run low and no more packets are queued. A short one (a clip's last block)
   // goes after the batch, alone.
-  async later({ before, bytes, count }) {
+  async later({ before, bytes, count, quiet }) {
     const made = packet(Kind.Audio, this.sequence++, before, bytes, count);
+    if (quiet) this.silent.add(made);
     if (count < PACKET) {
       if (!(await this.flushNow())) return false;
       this.batch.push(made);
@@ -295,6 +305,7 @@ class Talk {
       const writing = now();
       for (const made of list) {
         this.sentMs += ((made[6] | (made[7] << 8)) / PACKET) * PACKET_MS; // its sample count
+        if (!this.silent.has(made)) this.spoken = this.sentMs;
         if (!this.playAt && this.sentMs >= START_MS) this.playAt = writing + LINK_MS;
       }
       await this.speaker.writeMany(list); // back once the board has the last one

@@ -5,6 +5,7 @@ export const Limits = Object.freeze({
   "Version": 1,
   "HeaderBytes": 20,
   "MaxCaptionBytes": 160,
+  "AccentBytes": 3,
   "MaxFrameBytes": 183,
   "MinReceiveBytes": 44,
   "MaxPieceBytes": 4064,
@@ -61,14 +62,16 @@ export const State = Object.freeze({
   "Charging": 11,
   "LowBattery": 12,
   "Sleeping": 13,
-  "Privacy": 14
+  "Privacy": 14,
+  "Wave": 15
 });
 export const Gesture = Object.freeze({
   "Tap": 0,
   "Hold": 1,
   "Flip": 2,
   "Talk": 3,
-  "TalkEnd": 4
+  "TalkEnd": 4,
+  "Stop": 5
 });
 export const ResultCode = Object.freeze({
   "Ok": 0,
@@ -136,6 +139,9 @@ export const Capability = Object.freeze({
   "DisplayReadback": 128,
   "CaptureLease": 256,
   "Screen": 512,
-  "TalkButton": 1024
+  "TalkButton": 1024,
+  "Accent": 2048,
+  "StopButton": 4096
 });
-export const CapabilityMask = 2047;
+export const CapabilityMask = 8191;
+export const MaxWelcomeCapabilities = 8191;

@@ -1,4 +1,4 @@
-import { Limits, Type, CapabilityMask, State, Gesture, ResultCode, StopReason, CaptureHealth,
+import { Limits, Type, MaxWelcomeCapabilities, State, Gesture, ResultCode, StopReason, CaptureHealth,
   DisplayMood, MicMarker, PanelState, PresentationState } from './v1-ids.mjs';
 import { LookCatalog } from './looks.mjs';
 
@@ -42,15 +42,19 @@ function readBoolean(value, name) {
   return value === 1;
 }
 
-function captionBytes(caption) {
+function captionBytes(caption, maxBytes) {
   if (typeof caption !== 'string') throw new TypeError('caption must be a string');
   // Each UTF-16 code unit needs at least one UTF-8 byte. Bound the input before
   // scanning or allocating, including strings that cannot fit on the wire.
-  if (caption.length > Limits.MaxCaptionBytes) throw new RangeError('Caption too long');
+  if (caption.length > maxBytes) throw new RangeError('Caption too long');
   if (!caption.isWellFormed()) throw new TypeError('Unpaired caption surrogate');
   const bytes = encoder.encode(caption);
-  if (bytes.length > Limits.MaxCaptionBytes) throw new RangeError('Caption too long');
+  if (bytes.length > maxBytes) throw new RangeError('Caption too long');
   return bytes;
+}
+/** A Show's optional accent, 0xRRGGBB, or undefined for none (the field left out, or null). */
+function accentColor(accent) {
+  return accent === undefined || accent === null ? undefined : integer(accent, 'accent', 0, 0xffffff);
 }
 
 function header(message) {
@@ -76,7 +80,8 @@ function header(message) {
   return { type, session, request, sequence };
 }
 
-/** Payload bytes by type; a Show, PieceChunk or PieceList also carries its variable part. */
+/** Payload bytes by type; a Show, PieceChunk or PieceList also carries its variable part (a
+ * Show's is its caption, and its accent when it has one). */
 function payloadBytes(type, variable = 0) {
   switch (type) {
     case Type.Hello: return 8;
@@ -136,15 +141,18 @@ function payload(message, type) {
     }
     case Type.Welcome: {
       const capabilities = integer(message.capabilities, 'capabilities', 0, 0xffffffff);
-      if ((capabilities & ~CapabilityMask) !== 0) throw new RangeError('Unsupported negotiated capability');
+      if (capabilities > MaxWelcomeCapabilities) throw new RangeError('Unsupported negotiated capability');
       const receiveLimit = integer(message.receiveLimit, 'receiveLimit', Limits.MinReceiveBytes, Limits.MaxFrameBytes);
       return { capabilities, receiveLimit };
     }
     case Type.Show: {
       const state = enumeration(message.state, 'state', states);
       const progress = integer(message.progress, 'progress', 0, 255);
-      const caption = captionBytes(message.caption);
-      return { state, progress, caption };
+      // An accent follows the caption, so a caption that has one is AccentBytes shorter.
+      const accent = accentColor(message.accent);
+      const caption = captionBytes(message.caption,
+        Limits.MaxCaptionBytes - (accent === undefined ? 0 : Limits.AccentBytes));
+      return { state, progress, caption, accent };
     }
     case Type.Input:
       return { gesture: enumeration(message.gesture, 'gesture', gestures) };
@@ -303,7 +311,9 @@ function payload(message, type) {
 export function encode(message) {
   const common = header(message);
   const data = payload(message, common.type);
-  const length = payloadBytes(common.type, data.caption?.length ?? data.data?.length ?? (data.keys ? 4 * data.keys.length : 0));
+  const accentBytes = data.accent === undefined ? 0 : Limits.AccentBytes;
+  const length = payloadBytes(common.type,
+    data.caption ? data.caption.length + accentBytes : data.data?.length ?? (data.keys ? 4 * data.keys.length : 0));
   const bytes = new Uint8Array(Limits.HeaderBytes + length);
   const view = new DataView(bytes.buffer);
   bytes[0] = Limits.Magic0;
@@ -331,6 +341,9 @@ export function encode(message) {
       bytes[offset + 1] = data.progress;
       bytes[offset + 2] = data.caption.length;
       bytes.set(data.caption, offset + 3);
+      if (data.accent !== undefined) {
+        bytes.set([data.accent >> 16, (data.accent >> 8) & 0xff, data.accent & 0xff], offset + 3 + data.caption.length);
+      }
       break;
     case Type.Input:
       bytes[offset] = data.gesture;
@@ -463,10 +476,12 @@ export function decode(bytes) {
   });
   const offset = Limits.HeaderBytes;
   // A Show's, PieceChunk's or PieceList's length depends on its own length byte, when present.
+  // A Show may end with an accent after its caption: exactly AccentBytes more.
   const variable = message.type === Type.Show && length >= 3 ? bytes[offset + 2]
     : message.type === Type.PieceChunk && length >= 7 ? bytes[offset + 6]
     : message.type === Type.PieceList && length >= 2 ? 4 * bytes[offset + 1] : 0;
-  if (length !== payloadBytes(message.type, variable)) throw new RangeError('Invalid message payload length');
+  const accented = message.type === Type.Show && length === payloadBytes(message.type, variable + Limits.AccentBytes);
+  if (!accented && length !== payloadBytes(message.type, variable)) throw new RangeError('Invalid message payload length');
   switch (message.type) {
     case Type.Hello:
       message.minVersion = bytes[offset];
@@ -481,7 +496,11 @@ export function decode(bytes) {
     case Type.Show:
       message.state = bytes[offset];
       message.progress = bytes[offset + 1];
-      message.caption = decoder.decode(bytes.subarray(offset + 3));
+      message.caption = decoder.decode(bytes.subarray(offset + 3, offset + 3 + variable));
+      if (accented) {
+        const at = offset + 3 + variable;
+        message.accent = (bytes[at] << 16) | (bytes[at + 1] << 8) | bytes[at + 2];
+      }
       break;
     case Type.Input:
       message.gesture = bytes[offset];

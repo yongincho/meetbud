@@ -239,6 +239,11 @@
   // have it: tools no one can use cost every request, and the hosted brain takes 24 at most.
   const usable = (ctx) => TOOLS.filter((t) => !t.needs || ctx[t.needs]);
 
+  // What Bud says to a hello and to a goodbye, word for word (Henry, 2026-11-05). The hello is the
+  // one line for what Bud is.
+  const HELLO = 'Hi, I’m Bud, the AI walkie-talkie with a face that lives and works on the back of your phone!';
+  const GOODBYE = 'Bye now! Take care!';
+
   // friends: the user's Bud friends and their messages, when the host app has them;
   // talk: how people talk to Bud just now, 'walkie' (the mobile app's walkie-talkie: they hold Bud's top
   // button), 'away' (the mobile app with no Bud connected: typing or the phone's mic) or anything else
@@ -271,8 +276,11 @@
       '- Talk like a person in a real conversation: react to what they said ("ooh, nice", "oh no"), keep the thread going naturally, and ask back only when it helps them.',
       '- Never correct yourself, apologize or say "correction" about something from earlier unless they bring it up. Each reply stands on its own.',
       '- Stick to what they asked, all of it. Don\'t bring up earlier mistakes, old tasks or things you remember unless they matter right now. Timers, alarms and reminders you set earlier are taken care of: never mention them again unless asked.',
+      `- When they just say hi or hello, or ask who or what you are, say exactly "${HELLO}" and nothing else. When they say bye, good night or see you, say exactly "${GOODBYE}" and nothing else. A hello or goodbye that comes with a request ("hi, what's the weather?") gets the answer, not the line.`,
       '',
       'The right length and tone:',
+      `"Hi Bud!" -> "${HELLO}"`,
+      `"Okay, bye!" -> "${GOODBYE}"`,
       '"Set a timer for 10 minutes" -> "Ten minutes, starting now."',
       '"What\'s my day like?" -> "Pretty light: standup at 10, then dinner with Sam at 7."',
       '"Remind me to call Mom at 6" -> "Got it, I\'ll remind you at 6."',
@@ -766,11 +774,32 @@
         const first = cal.events[0];
         return `${cal.events.length} things ${d}, starting with ${first.title} at ${first.time}.`;
       }
-      if (/^(hi|hey|hello)\b/.test(s)) return 'Hey! What can I do for you?';
+      if (/^(hi|hey|hello)\b/.test(s)) return HELLO;
+      if (/\b(bye|goodbye|good night)\b/.test(s)) return GOODBYE;
       if (/thank/.test(s)) return 'Anytime!';
       return 'I’m the demo brain, so I only know a few things: moving meetings, booking tables, reminders, texts and your calendar. For the real Bud, pick Bud in Agents and enter the passcode.';
     },
   };
+
+  /* ------------------------------------------------------- hello and goodbye */
+
+  // A plain hello, "who are you" or goodbye gets its line at once, word for word, with no brain to
+  // ask (RULES says the same, for the ways of saying it these miss). Only when that is all they said:
+  // "hi, what's the weather?" goes to the brain. Matched on the words alone, without case or punctuation.
+  const NAME = '(?: bud| buddy)?';
+  const HI = '(?:hi|hello|hey|hiya|heya|howdy|yo|good (?:morning|afternoon|evening))(?: there| again)?';
+  const SAYS_HELLO = new RegExp(`^(?:${HI}${NAME}(?: |$))+$`);
+  const ASKS_WHO = new RegExp(`^(?:${HI}${NAME} )?(?:(?:who|what) (?:are you|is bud)|whats bud|whos bud|introduce yourself|tell me about yourself)${NAME}$`);
+  const OK = '(?:ok|okay|alright|all right|well|thanks|thank you|cool|great|perfect|awesome)';
+  // (not a bare "later" or "night": "Later." can answer Bud's "When should I remind you?")
+  const BYE = '(?:bye(?: bye| now| for now)?|goodbye|good bye|see (?:you|ya)(?: later| soon| tomorrow)?|catch you later|talk (?:to you )?later|ttyl|good ?night|night night|take care|peace out|(?:i )?(?:gotta|have to) go)';
+  const SAYS_BYE = new RegExp(`^(?:${OK}${NAME} )*(?:${BYE}${NAME}(?: |$))+$`);
+  function fixedReply(text) {
+    const words = String(text).toLowerCase().replace(/[’']/g, '').replace(/[^a-z]+/g, ' ').trim();
+    if (SAYS_HELLO.test(words) || ASKS_WHO.test(words)) return HELLO;
+    if (SAYS_BYE.test(words)) return GOODBYE;
+    return '';
+  }
 
   /* -------------------------------------------------------------- the agent */
 
@@ -778,6 +807,8 @@
     TOOLS,
     PROVIDERS,
     World,
+    HELLO,
+    GOODBYE,
     history: [],
     // For a loop of its own (a PROVIDERS entry's turn): this turn's request, and the app's way of
     // running a tool call (a write waits for approval, then the working ring shows).
@@ -808,9 +839,11 @@
       const onText = ctx.onText; // (both loops write through it, so a look-up's label never goes over it)
       if (onText) ctx.onText = (words) => (/\S/.test(words) && (ctx.hushed = true), onText(words));
       ctx.onStatus('thinking');
+      // (a photo shown with a hello is a question about the photo)
+      const fixed = ctx.image ? '' : fixedReply(text);
       let out;
       try {
-        out = await prov.turn(messages, ctx, ctx.cfg || {});
+        out = fixed || (await prov.turn(messages, ctx, ctx.cfg || {}));
         throwIfAborted(ctx.signal);
       } catch (e) {
         delete said.image;

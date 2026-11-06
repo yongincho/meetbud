@@ -1,10 +1,11 @@
 {
   "source": "../bud-hardware/firmware/protocol",
+  "sourceCommit": "7c070695eebbaa636307ec8191bd364e93e6b45d",
   "files": {
-    "v1-ids.mjs": "6ab5e198c32b0cefe54b8ea426ee48903de7823fd455bba1f549da45634e1235",
-    "v1.mjs": "dc57b50f2ca2f47d7f63bf8c2b8a5b49292263a5ccfcb0b908d21bb20d7ca43d",
+    "v1-ids.mjs": "e8a08b76b3e5c9ab7d2b14aa99599a432c6d8edb0c8bf6e85dcd90ee3c3ac9f6",
+    "v1.mjs": "ce53931e11720f0a5ff99ac91a792c9ddacffedf0041c672656f878e5292847e",
     "framing.mjs": "2671e8fc151422ecd7f84af68f810ebf662227c480b86e14dd111370af555667",
     "audio.mjs": "691bfe2f8bfa59cb6c3443f843df82af7a99db1757cbd27689ab10c6a6c7b3e5",
-    "looks.mjs": "586bcfc47679c680cf0801e15e148e5477f9c764b039644e4ec29984703c02c3"
+    "looks.mjs": "52933df1b10c97ed8233eb8a6859f27a4ae9f8d0ac1ebf6ec36ceec6adbfa7e6"
   }
 }

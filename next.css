@@ -118,6 +118,13 @@ button.bud:active { transform: scale(0.97); }
 .phone3d.on canvas { opacity: 1; }
 .js3d .phone-photo { display: none; }
 html:not(.js3d) .phone3d { display: none; }
+/* on wide screens the phone fills the stage, its top just under the buttons, and the hero crops
+ * its lower end; Bud's whole face still shows on a 1000 x 700 window (hero3d.js reads --fill, --top) */
+@media (min-width: 861px) {
+  .js3d .phone-wrap { margin-top: clamp(12px, 2.5vh, 36px); }
+  .phone3d { --fill: 1; --top: 0.03; }
+  .phone-wrap .say { left: calc(50% + 19vh); }
+}
 .bud-live {
   position: absolute; left: 24.758%; top: 30.646%; width: 61.338%; aspect-ratio: 1;
   border: 0; padding: 0; border-radius: 50%; overflow: hidden; background: #000;

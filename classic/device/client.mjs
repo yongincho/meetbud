@@ -77,6 +77,8 @@ export class DeviceClient {
   #session = 0;
   #lastSession = 0;
   #capabilities = 0;
+  // everything Bud's Hello offered, including bits this app doesn't negotiate: what its firmware has
+  #offered = 0;
   #peerReceiveLimit = 183;
   #txSequence = 0;
   #rxSequence = 0;
@@ -160,7 +162,7 @@ export class DeviceClient {
   }
   snapshot() {
     const snapshot = { phase: this.#phase, connected: !!this.#transport, deviceId: this.#transport?.deviceId ?? null, session: this.#session,
-      capabilities: this.#capabilities, request: this.#request,
+      capabilities: this.#capabilities, offered: this.#offered, request: this.#request,
       approval: this.#approval?.id ?? 0, status: this.#status, lastError: this.#lastError,
       generation: this.#generation, audioMaxPacketBytes: this.#audioMaxPacketBytes,
       audioOffer: this.#audioOffer && { ...this.#audioOffer },
@@ -220,7 +222,7 @@ export class DeviceClient {
     const old = this.#transport;
     this.#transport = null;
     old?.close?.();
-    this.#session = this.#capabilities = this.#request = this.#openingRequest = this.#txSequence = this.#rxSequence = 0;
+    this.#session = this.#capabilities = this.#offered = this.#request = this.#openingRequest = this.#txSequence = this.#rxSequence = 0;
     this.#requestHigh = this.#approvalHigh = 0;
     this.#helloSeen = false;
     this.#status = null;
@@ -350,6 +352,7 @@ export class DeviceClient {
       this.#lastSession = this.#session = message.session;
       this.#helloSeen = true;
       this.#peerReceiveLimit = message.receiveLimit;
+      this.#offered = message.capabilities;
       this.#capabilities = message.capabilities & this.#desiredCapabilities & CapabilityMask;
       if (!(this.#capabilities & Capability.Display)) this.#capabilities &= ~Capability.DisplayReadback;
       if (!this.#audioTransportReady ||
@@ -729,12 +732,17 @@ export class DeviceClient {
       if (this.#openingRequest === request) this.#openingRequest = 0;
     }
   }
-  show(state, progress = 0, caption = '', request = this.#request) {
+  // accent: the color of the agent at work, 0xRRGGBB, or null for none. Bud gets it only when it
+  // agreed Capability.Accent (older firmware refuses the longer Show); it costs the caption 3 bytes.
+  show(state, progress = 0, caption = '', request = this.#request, accent = null) {
     this.#requireCapability(Capability.Display);
     if (!u32(request)) throw new RangeError('Invalid Show request.');
     if (!Number.isInteger(progress) || progress < 0 || progress > 255) throw new RangeError('Progress must be 0..255.');
-    const text = truncateCaption(caption, Math.min(160, this.#peerReceiveLimit - 23));
-    return this.#command(Type.Show, request, { state: stateNumber(state), progress, caption: text });
+    if (accent != null && !(Number.isInteger(accent) && accent >= 0 && accent <= 0xffffff)) throw new RangeError('Accent must be 0xRRGGBB.');
+    const sent = accent != null && (this.#capabilities & Capability.Accent) !== 0;
+    const room = Math.min(Limits.MaxCaptionBytes, this.#peerReceiveLimit - Limits.HeaderBytes - 3) - (sent ? Limits.AccentBytes : 0);
+    const fields = { state: stateNumber(state), progress, caption: truncateCaption(caption, room) };
+    return this.#command(Type.Show, request, sent ? { ...fields, accent } : fields);
   }
   renewCapture(recording, request = this.#request, current = () => true) {
     this.#requireCapability(Capability.CaptureLease);
