@@ -4,7 +4,7 @@
 :root {
   --ink: #121212;
   --ink-2: #5d5a55;
-  --ink-3: #8f8a83;
+  --ink-3: #746f68; /* (4.7:1 on the paper, 5:1 on white: small gray text people can read) */
   --paper: #faf8f4;
   --shell: #f4f1ec;
   --card: #ffffff;
@@ -196,8 +196,10 @@ section { scroll-margin-top: 72px; }
 footer { position: relative; overflow: hidden; padding: 72px 0 0; }
 .foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--ink-3); }
 .foot a { text-decoration: none; color: var(--ink-2); }
-.credit { margin-top: 14px; font-size: 12px; color: var(--ink-3); }
-.credit a { color: inherit; }
+/* the phone model's licence credit (CC BY 4.0): small, but there to read */
+.credit { margin-top: 10px; font-size: 11px; color: var(--ink-3); }
+.credit a { color: inherit; text-decoration: none; }
+.credit a:hover { text-decoration: underline; }
 /* a crowd of small Buds peeking up from the bottom edge (next.js): each a little different in size,
  * tilting and bobbing on its own beat; they pop up in turn when the footer shows, the one under the
  * pointer jumps up, and now and then one pops up to say hi. (align-items keeps them round: a

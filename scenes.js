@@ -24,10 +24,10 @@
     oled: true, glow: true, grid: false, drift: false, shape: { type: 'circle' }, stage: {}, variety: !REDUCED };
   const lookCfg = (id) => (id ? { character: 'skins', base: 'eyes', pack: id } : { character: 'eyes', theme: 'classic', acc: {}, ambient: null });
   const faces = new Map();
-  function face(el, look, fps) {
+  function face(el, look, fps, opts) {
     if (faces.has(el)) return faces.get(el);
     const host = el.querySelector('.bud-screen') || el;
-    const scr = new K.Screen(host, { fps: fps || 30, bloom: true });
+    const scr = new K.Screen(host, Object.assign({ fps: fps || 30, bloom: true }, opts));
     scr.set(Object.assign({}, BASE, lookCfg(look || '')));
     faces.set(el, scr);
     return scr;
@@ -57,7 +57,10 @@
     f.style.cssText = `left:calc(50% + ${x}px - ${d / 2}px);top:${y}px`;
     f.innerHTML = `<div class="bud" style="--d:${d}px;animation-delay:${-i * 0.9}s" data-look="${look}"><span class="bud-glass"><span class="bud-screen"></span></span></div>`;
     floaters.appendChild(f);
-    const scr = face(f.firstChild, look, 24);
+    // a blurred floater is already out of focus (5px blur): a slower, half-size, no-bloom canvas looks the same
+    // and costs a fraction (bloom is six extra canvas draws a frame); the others drop from 24 to 20 fps
+    const soft = cls.includes('blur');
+    const scr = face(f.firstChild, look, soft ? 12 : 20, soft ? { bloom: false, quality: 0.5 } : null);
     f.addEventListener('pointerenter', () => scr.set({ state: 'love' }));
     f.addEventListener('pointerleave', () => scr.set({ state: 'idle' }));
   });
@@ -65,13 +68,19 @@
   function cheer(state = 'love', ms = 1800) {
     floatFaces().forEach((s, i) => setTimeout(() => { s.set({ state }); setTimeout(() => s.set({ state: 'idle' }), ms); }, i * 110));
   }
-  // a little parallax as the section scrolls by
+  // a little parallax as the section scrolls by (once a frame at most, and only while the section is near the screen)
+  const drift = $$('.floater', root).map((f, i) => [f, (i % 2 ? 60 : -50) * (f.classList.contains('blur') ? 0.6 : 1)]);
+  let pTick = 0, placed = false;
   function parallax() {
+    pTick = 0;
     const r = root.getBoundingClientRect();
+    if (placed && (r.bottom < -innerHeight || r.top > innerHeight * 2)) return;
+    placed = true;
     const p = (r.top + r.height / 2 - innerHeight / 2) / innerHeight;
-    $$('.floater', root).forEach((f, i) => { f.style.transform = `translateY(${p * (i % 2 ? 60 : -50) * (f.classList.contains('blur') ? 0.6 : 1)}px)`; });
+    drift.forEach(([f, k]) => { f.style.transform = `translate3d(0,${(p * k).toFixed(1)}px,0)`; });
   }
-  if (!REDUCED) addEventListener('scroll', parallax, { passive: true });
+  const parallaxSoon = () => { if (!pTick) pTick = requestAnimationFrame(parallax); };
+  if (!REDUCED) addEventListener('scroll', parallaxSoon, { passive: true });
   parallax();
 
   /* ------------------------------------------------------------- the phone's scale */

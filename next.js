@@ -36,11 +36,22 @@
   const point = (e) => { px = e.clientX; py = e.clientY; moved = performance.now(); };
   addEventListener('pointermove', point, { passive: true });
   addEventListener('pointerdown', point, { passive: true });
+  // (with no pointer lately the eyes ease back without measuring where each Bud is, and once all are
+  // back nothing runs: on a phone, that is nearly always)
+  let settled = false;
   function gaze(now) {
     requestAnimationFrame(gaze);
     const active = now - moved < 2600;
+    if (!active && settled) return;
+    let still = !active;
     for (const b of buds) {
       if (!b.follow) continue;
+      if (!active) {
+        b.amt -= b.amt * 0.05;
+        b.scr.cfg.gaze = b.amt > 0.01 ? { x: b.gx, y: b.gy, amt: b.amt } : null;
+        if (b.amt > 0.01) still = false;
+        continue;
+      }
       const r = b.el.getBoundingClientRect();
       if (r.bottom < 0 || r.top > innerHeight) continue;
       const st = b.scr.cfg.state;
@@ -52,6 +63,7 @@
       b.gy += (ty - b.gy) * 0.18;
       b.scr.cfg.gaze = b.amt > 0.01 ? { x: b.gx, y: b.gy, amt: b.amt } : null;
     }
+    settled = still;
   }
   if (!REDUCED) requestAnimationFrame(gaze);
 
@@ -103,8 +115,12 @@
     flowSay.classList.toggle('on', !!li);
   }
   steps.forEach((s) => s.querySelector('.state').style.setProperty('--c', tintOf(s.dataset.state)));
-  // the step nearest a reading line is the one Bud acts out (computed on scroll, which also works in frames)
+  // the step nearest a reading line is the one Bud acts out (computed on scroll, which also works in frames;
+  // once a frame at most, and every measure before any change: a measure after a change lays the page out again)
+  const nav = $('#nav'), heroEl = $('.hero'), join = $('#join'), cta = $('#stickyCta');
+  let sTick = 0;
   function onScroll() {
+    sTick = 0;
     const line = innerHeight * (innerWidth <= 860 ? 0.72 : 0.5);
     let best = null, bestD = Infinity;
     for (const s of steps) {
@@ -112,15 +128,16 @@
       const d = Math.abs(r.top + r.height / 2 - line);
       if (r.bottom > 0 && r.top < innerHeight && d < bestD) { best = s; bestD = d; }
     }
+    const pastHero = heroEl.getBoundingClientRect().bottom < 0;
+    const atJoin = join.getBoundingClientRect().top < innerHeight * 0.8;
     activate(best);
-    $('#nav').classList.toggle('solid', scrollY > 24);
-    const pastHero = $('.hero').getBoundingClientRect().bottom < 0;
-    const atJoin = $('#join').getBoundingClientRect().top < innerHeight * 0.8;
-    $('#stickyCta').classList.toggle('on', pastHero && !atJoin);
+    nav.classList.toggle('solid', scrollY > 24);
+    cta.classList.toggle('on', pastHero && !atJoin);
   }
-  addEventListener('scroll', onScroll, { passive: true });
+  const onScrollSoon = () => { if (!sTick) sTick = requestAnimationFrame(onScroll); };
+  addEventListener('scroll', onScrollSoon, { passive: true });
   addEventListener('scrollend', onScroll); // (a fast fling's last frame)
-  addEventListener('resize', onScroll);
+  addEventListener('resize', onScrollSoon);
   onScroll();
 
   /* ------------------------------------------------ the footer: a crowd of Buds peeking up */
@@ -142,7 +159,7 @@
       w.style.setProperty('--s', SIZES[i]); w.style.setProperty('--i', i);
       w.innerHTML = '<div class="bud"><span class="bud-glass"><span class="bud-screen"></span></span></div>';
       peek.appendChild(w);
-      const b = mount(w.firstChild, cfg, { fps: 24, follow: true });
+      const b = mount(w.firstChild, cfg, { fps: 15, follow: true }); // (18 small faces: 15 a second, as the wardrobe's tiles)
       const feel = (st, ms) => { b.scr.set({ state: st }); clearTimeout(b.t); b.t = setTimeout(() => b.scr.set({ state: 'idle' }), ms); };
       w.addEventListener('pointerenter', () => feel('love', 1500));
       w.addEventListener('click', () => { w.classList.remove('hop', 'hi'); void w.offsetWidth; w.classList.add('hop'); feel('love', 1800); track('footer_bud', { look: name }); });

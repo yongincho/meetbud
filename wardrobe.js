@@ -93,6 +93,21 @@
   }
   const arts = [];
   const U = K.util;
+  // the slow setup of a tile (measuring a piece, making a live face) runs in ~6 ms slices, one a frame,
+  // so opening a tab never stalls a frame on a slow phone (a fast one sets up a whole tab in one)
+  const jobs = [];
+  let pumping = false;
+  function later(fn) {
+    jobs.push(fn);
+    if (!pumping) { pumping = true; requestAnimationFrame(pump); }
+  }
+  function pump() {
+    const t0 = performance.now();
+    while (jobs.length && performance.now() - t0 < 6) {
+      try { jobs.shift()(); } catch (e) { console.warn('wardrobe tile', e); } // (one bad tile never stops the rest)
+    }
+    if (jobs.length) requestAnimationFrame(pump); else pumping = false;
+  }
   function artEnv(t) {
     const env = { t, theme: 'classic', accColors: K.accColors ? K.accColors('classic') : {}, oled: true, mono: false, lowRes: 0, shape: { type: 'circle' },
       rate: (hz) => hz, wave: (hz, ph) => Math.sin(Math.PI * 2 * (hz * t + (ph || 0))), c: (rgb, a) => U.css(rgb, a == null ? 1 : a) };
@@ -100,6 +115,7 @@
     return env;
   }
   function drawArt(a, t) {
+    if (!a.ready) return; // not measured yet
     const W = a.cv.width, ctx = a.ctx;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, W);
@@ -127,11 +143,15 @@
       if (art) {
         const cv = $('canvas', b);
         const a = { cv, ctx: cv.getContext('2d'), slot: t, id: b.dataset.id, pane: p };
-        fitArt(a); arts.push(a); drawArt(a, 0);
+        arts.push(a);
+        later(() => { fitArt(a); a.ready = true; drawArt(a, 0); });
       } else {
-        const s = new K.Screen($('.bud-screen', b), { fps: 24, bloom: true });
-        s.set(Object.assign({}, BASE, cfgFor(t, b.dataset.id)));
-        minis.set(b, s);
+        // small faces animate at 15 fps (a blink or a wave reads the same at this size)
+        later(() => {
+          const s = new K.Screen($('.bud-screen', b), { fps: 15, bloom: true });
+          s.set(Object.assign({}, BASE, cfgFor(t, b.dataset.id)));
+          minis.set(b, s);
+        });
       }
       b.addEventListener('click', () => { pick(t, b.dataset.id, b); if (window.budTrack) window.budTrack('wardrobe_pick', { tab: t, piece: b.dataset.id || 'classic' }); });
     });

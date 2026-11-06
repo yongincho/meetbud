@@ -59,7 +59,7 @@ const IPHONE_H = 163.4; // a 17 or 18 Pro Max's height, mm
 async function loadPhone() {
   const [{ GLTFLoader }, { MeshoptDecoder }] = await Promise.all([
     import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js')]);
-  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(new URL('models/iphone.glb', import.meta.url).href);
+  const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(new URL('models/iphone.glb?v=2', import.meta.url).href);
   const root = gltf.scene;
   // its source scene stands the phone up on a floor, tilted a little; undo that
   const body = root.getObjectByName('Object_7_0');
@@ -94,22 +94,9 @@ async function loadPhone() {
   return { group, w: size.x * k, h: size.y * k, budY: -0.06 * size.y * k, backZ };
 }
 
-async function start() {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, innerWidth < 700 ? 1.6 : 2));
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.92;
-  host.appendChild(renderer.domElement);
-
-  const scene = new THREE.Scene();
-  // a bright room for the metal; glass and lenses take only a little of it (envMapIntensity)
-  light(THREE, renderer, scene, RoomEnvironment);
-
-  const camera = new THREE.PerspectiveCamera(20, 1, 10, 2000);
-  camera.position.set(0, 0, 520);
-
-  /* ------------------------------------------------------------- materials */
+// A drawn phone, about an iPhone 15, for when the model can't load (built only then: its rounded,
+// beveled shapes take ~35 ms to make). Its back faces +z, at PHONE.d / 2.
+function drawnPhone() {
   // frosted color glass with a thin glossy coat (soft highlights), and a satin anodized frame
   const glassBack = new THREE.MeshPhysicalMaterial({ color: 0xaecbe6, roughness: 0.58, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.1, envMapIntensity: 0.9 });
   const frameMat = new THREE.MeshPhysicalMaterial({ color: 0xc2d5e6, roughness: 0.34, metalness: 0.65, envMapIntensity: 1.0 });
@@ -117,13 +104,7 @@ async function start() {
   const bump = new THREE.MeshPhysicalMaterial({ color: 0xbad3e8, roughness: 0.08, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 0.9 });
   const ringMetal = new THREE.MeshPhysicalMaterial({ color: 0xc9d6e2, roughness: 0.14, metalness: 1, envMapIntensity: 1.2 });
   const lensGlass = new THREE.MeshPhysicalMaterial({ color: 0x05070b, roughness: 0.03, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 0.35 });
-
-  /* ------------------------------------------------------------- the phone */
-  // The real phone is a 3D model (models/iphone.glb, loaded below); this drawn one stands in if it
-  // can't load.
-  const phone = new THREE.Group();
   const drawn = new THREE.Group();
-  phone.add(drawn);
   const body = slab(PHONE.w, PHONE.h, PHONE.r, PHONE.d, PHONE.bevel, [glassBack, frameMat]);
   body.rotation.y = Math.PI; // the extrude's +z cap is the back, facing the camera at rest
   drawn.add(body);
@@ -154,8 +135,43 @@ async function start() {
   const flash = new THREE.Mesh(new THREE.CircleGeometry(2.3, 40), new THREE.MeshPhysicalMaterial({ color: 0xf3efe2, roughness: 0.25, clearcoat: 1 }));
   flash.position.set(cam.position.x + 6.6, cam.position.y + 6.4, back + 1.42);
   drawn.add(flash);
-  const dims = { w: PHONE.w, h: PHONE.h }; // the phone shown (the model's, once it loads)
+  return drawn;
+}
 
+// How sharp the hero draws. Its cost is mostly pixels (each one runs the glossy materials), so the
+// pixel ratio is capped, and it steps down while frames run slow on an older phone or laptop.
+const DPR_MAX = Math.min(devicePixelRatio || 1, 1.5);
+const DPR_MIN = 1;
+
+async function start() {
+  // the phone model downloads while the rest is set up (given 5 s; past that, or failing, the drawn phone)
+  const modelLoad = Promise.race([loadPhone(), new Promise((r) => setTimeout(() => r(null), 5000))])
+    .catch((e) => { console.warn('phone model', e); return null; });
+  await new Promise((r) => setTimeout(r)); // (three.js itself has just been read in: a breath before the renderer)
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  let dpr = DPR_MAX;
+  renderer.setPixelRatio(dpr);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.92;
+  host.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  // a bright room for the metal; glass and lenses take only a little of it (envMapIntensity)
+  light(THREE, renderer, scene, RoomEnvironment);
+
+  const camera = new THREE.PerspectiveCamera(20, 1, 10, 2000);
+  camera.position.set(0, 0, 520);
+
+  // (a breath for the browser: the renderer and the room are the heaviest setup, ~45 ms on a fast
+  // laptop; the rest follows in the next task, so neither holds the page for long)
+  await new Promise((r) => setTimeout(r));
+
+  /* ------------------------------------------------------------- the phone */
+  // the real phone (models/iphone.glb, loading since start() began), or the drawn one if it can't load
+  const phone = new THREE.Group();
+  const back = PHONE.d / 2; // the drawn phone's back glass, where Bud sits on it
+  const dims = { w: PHONE.w, h: PHONE.h }; // the phone shown (the model's, once it loads)
   /* ------------------------------------------------------------- Bud (bud3d.js) */
   const R = BUD.r;
   // the screen: the live face glows under glossy glass
@@ -166,7 +182,9 @@ async function start() {
   faceEl.style.cssText = 'width:512px;height:512px';
   faceHost.appendChild(faceEl);
   document.body.appendChild(faceHost);
-  const face = new K.Screen(faceEl, { fps: 60, bloom: true, manual: true });
+  // drawn at 512 px on every screen (the face library scales by the pixel ratio, up to 1024 px, which
+  // is far more than Bud's ~300 px on screen and slow to send to the GPU every frame)
+  const face = new K.Screen(faceEl, { fps: 60, bloom: true, manual: true, quality: 1 / Math.min(2, devicePixelRatio || 1) });
   face.set({ character: 'eyes', base: 'eyes', pack: 'lantern', theme: 'classic', acc: {}, ambient: null, state: 'hello',
     oled: true, glow: true, grid: false, drift: false, shape: { type: 'circle' }, stage: {}, variety: !REDUCED });
   const tex = new THREE.CanvasTexture(face.canvas);
@@ -198,7 +216,7 @@ async function start() {
   sg.fillStyle = grad; sg.fillRect(0, 0, 256, 256);
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false }));
   shadow.scale.set(150, 26, 1);
-  shadow.position.set(-6, -PHONE.h / 2 - 22, -40);
+  shadow.position.set(-6, -PHONE.h / 2 - 22, -40); // (under the leaning phone)
   scene.add(shadow);
 
   const rig = new THREE.Group();
@@ -206,9 +224,9 @@ async function start() {
   scene.add(rig);
 
   // the real phone, when it loads in time (the photo shows until then); Bud on its back glass
-  const model = await Promise.race([loadPhone(), new Promise((r) => setTimeout(() => r(null), 5000))]).catch((e) => { console.warn('phone model', e); return null; });
-  if (model) {
-    drawn.visible = false;
+  const model = await modelLoad;
+  if (!model) phone.add(drawnPhone());
+  else {
     phone.add(model.group);
     dims.w = model.w; dims.h = model.h;
     const z = model.backZ(0, model.budY);
@@ -260,19 +278,45 @@ async function start() {
     renderer.domElement.style.cursor = ray.intersectObjects([screen, shell], false).length ? 'pointer' : '';
   });
 
+  // compile every shader before the first frame, so the turn doesn't stutter at its start (given 1.5 s at
+  // most, and a failure only skips it: the shaders then compile on the first frame, as before)
+  await Promise.race([Promise.resolve().then(() => renderer.compileAsync(scene, camera)),
+    new Promise((r) => setTimeout(r, 1500))]).catch(() => {});
+
   const t0 = performance.now();
   const ease = (x) => 1 - Math.pow(1 - x, 4);
   let visible = true;
   new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; }).observe(host);
   let gx = 0, gy = 0;
+  // the phone turns at the screen's own rate (120 a second on a 120 Hz screen); Bud's face is redrawn
+  // 30 times a second, as the app scenes' Buds run (each redraw is sent to the GPU, the costly part)
+  const FACE_GAP = 1000 / 30 - 2;
+  let lastFace = 0, prev = 0;
+  // past 2.5 s, if the typical gap of 60 frames in a row (the middle one, so one stall or a tab coming
+  // back can't trip it) is slower than ~45 frames a second, draw less sharp
+  const gaps = [];
+  document.addEventListener('visibilitychange', () => { prev = 0; gaps.length = 0; });
   function frame(now) {
     requestAnimationFrame(frame);
-    if (!visible) return;
+    const gap = prev ? now - prev : 0;
+    prev = now;
+    if (!visible) { gaps.length = 0; return; }
+    if (gap && now - t0 > 2500 && dpr > DPR_MIN) {
+      gaps.push(gap);
+      if (gaps.length === 60) {
+        const typical = gaps.sort((a, b) => a - b)[30];
+        gaps.length = 0;
+        // (prev = 0: the next gap holds the resize itself)
+        if (typical > 22) { dpr = Math.max(DPR_MIN, dpr - 0.25); renderer.setPixelRatio(dpr); resize(); prev = 0; }
+      }
+    }
     const t = (now - t0) / 1000;
     // the turn from the front to the back, over the first 1.8 s
     const turn = REDUCED ? 1 : ease(Math.min(1, Math.max(0, (t - 0.25) / 1.8)));
     gx += (px - gx) * 0.05; gy += (py - gy) * 0.05;
     const sway = REDUCED ? 0 : Math.sin(t * 0.55) * 0.07;
+    // (it ends turned a little and leaning, so its side and Bud's buttons show; the sway and the
+    // pointer turn it a little more either way)
     rig.rotation.y = (1 - turn) * Math.PI - 0.32 + sway + gx * 0.18;
     rig.rotation.x = 0.08 + gy * 0.1 + (REDUCED ? 0 : Math.sin(t * 0.4) * 0.025);
     rig.rotation.z = -0.07;
@@ -280,7 +324,10 @@ async function start() {
     shadow.material.opacity = 0.8 + Math.sin(t * 0.8) * 0.12;
     face.cfg.gaze = { x: gx * 0.9, y: gy * 0.6, amt: turn };
     // (a face that fails to draw leaves the screen as it was; the phone still shows)
-    try { face.render(now / 1000); tex.needsUpdate = true; } catch (e) { /* the face library didn't load whole */ }
+    if (now - lastFace >= FACE_GAP) {
+      lastFace = now;
+      try { face.render(now / 1000); tex.needsUpdate = true; } catch (e) { /* the face library didn't load whole */ }
+    }
     renderer.render(scene, camera);
   }
   requestAnimationFrame(frame);

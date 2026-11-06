@@ -18,18 +18,36 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..900&family=Nunito:wght@800..900&display=swap">
-<link rel="stylesheet" href="next.css?v=19">
-<link rel="stylesheet" href="scenes.css?v=5">
-<link rel="stylesheet" href="wardrobe.css?v=4">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<!-- (these three scripts come before the stylesheets: a script after them waits for them to load) -->
 <script>
   // the 3D phone needs WebGL 2; without it the page shows the photo instead (hero3d.js)
   try { if (document.createElement('canvas').getContext('webgl2')) document.documentElement.classList.add('js3d'); } catch (e) {}
 </script>
 <script type="importmap">{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 } }</script>
+<script>
+  // the 3D phone's files, fetched now instead of one after another as each asks for the next (hero3d.js,
+  // then three.js, then the loader, then the model): only where the phone shows. (After the import map,
+  // which must come first; keep bud3d.js's and the model's ?v= in step with hero3d.js.)
+  if (document.documentElement.classList.contains('js3d')) {
+    const jsm = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/';
+    for (const href of ['https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js', 'bud3d.js?v=1',
+      jsm + 'environments/RoomEnvironment.js', jsm + 'loaders/GLTFLoader.js', jsm + 'utils/BufferGeometryUtils.js',
+      jsm + 'libs/meshopt_decoder.module.js', 'models/iphone.glb?v=2']) {
+      const l = document.createElement('link');
+      if (href.includes('.glb')) { l.rel = 'preload'; l.as = 'fetch'; l.crossOrigin = 'anonymous'; } else l.rel = 'modulepreload';
+      l.href = href;
+      document.head.appendChild(l);
+    }
+  }
+</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..900&family=Nunito:wght@800..900&display=swap">
+<link rel="stylesheet" href="next.css?v=21">
+<link rel="stylesheet" href="scenes.css?v=7">
+<link rel="stylesheet" href="wardrobe.css?v=4">
 </head>
 <body>
 <!-- draft of the next meetbud.app (2026-11-04), not published -->
@@ -274,7 +292,7 @@
     <span class="brand">bud</span>
     <span><a href="mailto:hello@meetbud.app">hello@meetbud.app</a> · © 2026 Bud</span>
   </div>
-  <p class="wrap credit">Phone model: <a href="https://sketchfab.com/3d-models/iphone-18-pro-max-high-quality-3d-model-5e40716caa274a789de5b17798ee2e78">“iPhone 18 Pro Max – High Quality 3D Model”</a> by <a href="https://sketchfab.com/Riju.mandal">Pro Animator</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, recolored and simplified.</p>
+  <p class="wrap credit"><a href="https://sketchfab.com/3d-models/iphone-18-pro-max-high-quality-3d-model-5e40716caa274a789de5b17798ee2e78">Phone model</a> by <a href="https://sketchfab.com/Riju.mandal">Pro Animator</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, modified</p>
   <div class="peek" id="peek" aria-hidden="true"></div>
 </footer>
 
@@ -282,182 +300,12 @@
 
 <script>window.BUD_NEXT = { waitlistEndpoint: 'https://bud-connect.meetbud.workers.dev/waitlist', analytics: true }; // the list: connect/waitlist.mjs</script>
 <!-- lib/files.json: face, phones, devices (tools/lib-files.mjs writes these tags) -->
-<script src="../lib/core.js"></script>
-<script src="../lib/themes.js"></script>
-<script src="../lib/states/_kit.js"></script>
-<script src="../lib/states/charging.js"></script>
-<script src="../lib/states/cold.js"></script>
-<script src="../lib/states/confused.js"></script>
-<script src="../lib/states/dizzy.js"></script>
-<script src="../lib/states/done.js"></script>
-<script src="../lib/states/hello.js"></script>
-<script src="../lib/states/hot.js"></script>
-<script src="../lib/states/idle.js"></script>
-<script src="../lib/states/listening.js"></script>
-<script src="../lib/states/love.js"></script>
-<script src="../lib/states/lowbattery.js"></script>
-<script src="../lib/states/needsyou.js"></script>
-<script src="../lib/states/privacy.js"></script>
-<script src="../lib/states/recording.js"></script>
-<script src="../lib/states/sleeping.js"></script>
-<script src="../lib/states/speaking.js"></script>
-<script src="../lib/states/thinking.js"></script>
-<script src="../lib/states/wave.js"></script>
-<script src="../lib/states/working.js"></script>
-<script src="../lib/pose.js"></script>
-<script src="../lib/fidgets.js"></script>
-<script src="../lib/transitions.js"></script>
-<script src="../lib/face.js"></script>
-<script src="../lib/fx.js"></script>
-<script src="../lib/ambients/bats.js"></script>
-<script src="../lib/ambients/confetti.js"></script>
-<script src="../lib/ambients/fireflies.js"></script>
-<script src="../lib/ambients/notes.js"></script>
-<script src="../lib/ambients/petals.js"></script>
-<script src="../lib/ambients/rain.js"></script>
-<script src="../lib/ambients/snow.js"></script>
-<script src="../lib/ambients/sparkles.js"></script>
-<script src="../lib/ambients/stars.js"></script>
-<script src="../lib/accessories/_kit.js"></script>
-<script src="../lib/accessories/face/divingGoggles.js"></script>
-<script src="../lib/accessories/face/operaGlasses.js"></script>
-<script src="../lib/accessories/face/roundGlasses.js"></script>
-<script src="../lib/accessories/face/santaBeard.js"></script>
-<script src="../lib/accessories/face/snorkelMask.js"></script>
-<script src="../lib/accessories/face/starGlasses.js"></script>
-<script src="../lib/accessories/face/sunglasses.js"></script>
-<script src="../lib/accessories/head/ballCap.js"></script>
-<script src="../lib/accessories/head/beanie.js"></script>
-<script src="../lib/accessories/head/beret.js"></script>
-<script src="../lib/accessories/head/blossom.js"></script>
-<script src="../lib/accessories/head/boater.js"></script>
-<script src="../lib/accessories/head/bucketHat.js"></script>
-<script src="../lib/accessories/head/bunnyEars.js"></script>
-<script src="../lib/accessories/head/busby.js"></script>
-<script src="../lib/accessories/head/catEars.js"></script>
-<script src="../lib/accessories/head/cowboyHat.js"></script>
-<script src="../lib/accessories/head/crown.js"></script>
-<script src="../lib/accessories/head/edelweiss.js"></script>
-<script src="../lib/accessories/head/gat.js"></script>
-<script src="../lib/accessories/head/headphones.js"></script>
-<script src="../lib/accessories/head/laurelWreath.js"></script>
-<script src="../lib/accessories/head/newsboyCap.js"></script>
-<script src="../lib/accessories/head/partyHat.js"></script>
-<script src="../lib/accessories/head/pirateHat.js"></script>
-<script src="../lib/accessories/head/rangerHat.js"></script>
-<script src="../lib/accessories/head/santaHat.js"></script>
-<script src="../lib/accessories/head/strawHat.js"></script>
-<script src="../lib/accessories/head/tricornHat.js"></script>
-<script src="../lib/accessories/head/umbrella.js"></script>
-<script src="../lib/accessories/head/witch.js"></script>
-<script src="../lib/accessories/item/acorn.js"></script>
-<script src="../lib/accessories/item/bagel.js"></script>
-<script src="../lib/accessories/item/balloon.js"></script>
-<script src="../lib/accessories/item/banhMi.js"></script>
-<script src="../lib/accessories/item/beachBall.js"></script>
-<script src="../lib/accessories/item/beignet.js"></script>
-<script src="../lib/accessories/item/bibimbap.js"></script>
-<script src="../lib/accessories/item/blueberries.js"></script>
-<script src="../lib/accessories/item/brush.js"></script>
-<script src="../lib/accessories/item/bubbleTea.js"></script>
-<script src="../lib/accessories/item/buchae.js"></script>
-<script src="../lib/accessories/item/bungeoppang.js"></script>
-<script src="../lib/accessories/item/bus.js"></script>
-<script src="../lib/accessories/item/cableCar.js"></script>
-<script src="../lib/accessories/item/cactus.js"></script>
-<script src="../lib/accessories/item/cannoli.js"></script>
-<script src="../lib/accessories/item/canoe.js"></script>
-<script src="../lib/accessories/item/chai.js"></script>
-<script src="../lib/accessories/item/cherryBranch.js"></script>
-<script src="../lib/accessories/item/chowder.js"></script>
-<script src="../lib/accessories/item/churro.js"></script>
-<script src="../lib/accessories/item/clownfish.js"></script>
-<script src="../lib/accessories/item/coffee.js"></script>
-<script src="../lib/accessories/item/cottonCandy.js"></script>
-<script src="../lib/accessories/item/croissant.js"></script>
-<script src="../lib/accessories/item/custardTart.js"></script>
-<script src="../lib/accessories/item/dango.js"></script>
-<script src="../lib/accessories/item/deepDish.js"></script>
-<script src="../lib/accessories/item/deer.js"></script>
-<script src="../lib/accessories/item/dimSum.js"></script>
-<script src="../lib/accessories/item/dolphin.js"></script>
-<script src="../lib/accessories/item/duckling.js"></script>
-<script src="../lib/accessories/item/eomuk.js"></script>
-<script src="../lib/accessories/item/flamingo.js"></script>
-<script src="../lib/accessories/item/gelato.js"></script>
-<script src="../lib/accessories/item/giraffe.js"></script>
-<script src="../lib/accessories/item/globes.js"></script>
-<script src="../lib/accessories/item/goldenGate.js"></script>
-<script src="../lib/accessories/item/guitar.js"></script>
-<script src="../lib/accessories/item/gyeongjuBread.js"></script>
-<script src="../lib/accessories/item/hallabong.js"></script>
-<script src="../lib/accessories/item/hareubang.js"></script>
-<script src="../lib/accessories/item/kimbap.js"></script>
-<script src="../lib/accessories/item/koala.js"></script>
-<script src="../lib/accessories/item/lantern.js"></script>
-<script src="../lib/accessories/item/libertyBell.js"></script>
-<script src="../lib/accessories/item/library.js"></script>
-<script src="../lib/accessories/item/lighthouse.js"></script>
-<script src="../lib/accessories/item/llama.js"></script>
-<script src="../lib/accessories/item/lotus.js"></script>
-<script src="../lib/accessories/item/loveLock.js"></script>
-<script src="../lib/accessories/item/manatee.js"></script>
-<script src="../lib/accessories/item/mapleSyrup.js"></script>
-<script src="../lib/accessories/item/matcha.js"></script>
-<script src="../lib/accessories/item/mintTea.js"></script>
-<script src="../lib/accessories/item/mosaicLizard.js"></script>
-<script src="../lib/accessories/item/onigiri.js"></script>
-<script src="../lib/accessories/item/orchid.js"></script>
-<script src="../lib/accessories/item/panda.js"></script>
-<script src="../lib/accessories/item/paperBoat.js"></script>
-<script src="../lib/accessories/item/penguin.js"></script>
-<script src="../lib/accessories/item/pennants.js"></script>
-<script src="../lib/accessories/item/pouch.js"></script>
-<script src="../lib/accessories/item/present.js"></script>
-<script src="../lib/accessories/item/pretzel.js"></script>
-<script src="../lib/accessories/item/protea.js"></script>
-<script src="../lib/accessories/item/puffin.js"></script>
-<script src="../lib/accessories/item/pumpkin.js"></script>
-<script src="../lib/accessories/item/ramyeon.js"></script>
-<script src="../lib/accessories/item/rocket.js"></script>
-<script src="../lib/accessories/item/sailboat.js"></script>
-<script src="../lib/accessories/item/seaTurtle.js"></script>
-<script src="../lib/accessories/item/showTicket.js"></script>
-<script src="../lib/accessories/item/slideRule.js"></script>
-<script src="../lib/accessories/item/spyglass.js"></script>
-<script src="../lib/accessories/item/surfboard.js"></script>
-<script src="../lib/accessories/item/swan.js"></script>
-<script src="../lib/accessories/item/swimRing.js"></script>
-<script src="../lib/accessories/item/taco.js"></script>
-<script src="../lib/accessories/item/takoyaki.js"></script>
-<script src="../lib/accessories/item/teacup.js"></script>
-<script src="../lib/accessories/item/telescope.js"></script>
-<script src="../lib/accessories/item/torch.js"></script>
-<script src="../lib/accessories/item/tteokbokki.js"></script>
-<script src="../lib/accessories/item/tulip.js"></script>
-<script src="../lib/accessories/item/waffle.js"></script>
-<script src="../lib/accessories/neck/bestBuds.js"></script>
-<script src="../lib/accessories/neck/bowtie.js"></script>
-<script src="../lib/accessories/neck/crimsonScarf.js"></script>
-<script src="../lib/accessories/neck/lei.js"></script>
-<script src="../lib/accessories/neck/norigae.js"></script>
-<script src="../lib/accessories/neck/saekdong.js"></script>
-<script src="../lib/accessories/neck/scarf.js"></script>
-<script src="../lib/accessories/neck/schoolScarves.js"></script>
-<script src="../lib/accessories/neck/tartanScarf.js"></script>
-<script src="../lib/looks.js"></script>
-<script src="../lib/characters/eyes.js"></script>
-<script src="../lib/characters/skins.js"></script>
-<script src="../lib/screen.js"></script>
-<script src="../lib/phones.js"></script>
-<script src="../lib/forms.js"></script>
-<script src="../lib/device.js"></script>
-<script src="../lib/view3d.js"></script>
+<script src="../lib/bundle-ccbc80ef97.js"></script>
 <!-- end of lib/files.json -->
-<script src="next.js?v=14"></script>
+<script src="next.js?v=15"></script>
 <script src="icons.js?v=2"></script>
-<script src="scenes.js?v=6"></script>
-<script src="wardrobe.js?v=5"></script>
-<script type="module" src="hero3d.js?v=25"></script>
+<script src="scenes.js?v=7"></script>
+<script src="wardrobe.js?v=7"></script>
+<script type="module" src="hero3d.js?v=30"></script>
 </body>
 </html>
